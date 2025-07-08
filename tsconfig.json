@@ -2,5 +2,27 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./apps/api-gateway"
+    },
+    {
+      "path": "./apps/msvc_chat"
+    },
+    {
+      "path": "./apps/msvc_user"
+    },
+    {
+      "path": "./apps/msvc_auth"
+    },
+    {
+      "path": "./apps/msvc_realtime"
+    },
+    {
+      "path": "./apps/msvc_message"
+    },
+    {
+      "path": "./apps/msvc_media"
+    }
+  ]
 }
