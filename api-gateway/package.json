@@ -2,6 +2,10 @@
   "name": "@fluffy-backend/api-gateway",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+  "build": "nx run api-gateway:build",
+  "start": "nx serve api-gateway"
+  },
   "nx": {
     "targets": {
       "build": {

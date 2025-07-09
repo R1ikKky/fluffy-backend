@@ -4,7 +4,7 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/api-gateway"
+      "path": "./api-gateway"
     },
     {
       "path": "./apps/msvc_chat"
@@ -14,9 +14,6 @@
     },
     {
       "path": "./apps/msvc_auth"
-    },
-    {
-      "path": "./apps/msvc_realtime"
     },
     {
       "path": "./apps/msvc_message"

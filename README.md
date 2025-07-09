@@ -4,10 +4,16 @@
 
 To run certan microservice:
 ```
-nx serve <microservice name>
+nx serve <microservice_name>
 ```
-=============================
+
 To run all the microservices:
 ```
 nx run-many -t serve --all
 ```
+
+Pnpm install:
+```
+pnpm install
+```
+
