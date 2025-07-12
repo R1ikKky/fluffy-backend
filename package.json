@@ -2,7 +2,9 @@
   "name": "@fluffy-backend/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+     "build": "nx build msvc_chat --configuration=production"
+  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -30,7 +32,8 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "api-gateway"
   ],
   "dependencies": {
     "@nestjs/common": "^11.0.0",
