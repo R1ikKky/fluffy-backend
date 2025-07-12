@@ -1,6 +1,14 @@
 {
   "name": "@fluffy-backend/msvc_chat",
   "version": "0.0.1",
+  "scripts": {
+    "build": "nx build msvc_chat --configuration=production"
+  },
+  "devDependencies": {
+    "nx": "^18.3.0",
+    "@nx/nest": "^18.3.0",
+    "@nx/js": "^18.3.0"
+  },
   "private": true,
   "nx": {
     "targets": {
