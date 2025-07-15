@@ -16,6 +16,19 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: rick
+      POSTGRES_PASSWORD: Rick_Suncheazzz
+      POSTGRES_DB: fluffy
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   api-gateway:
     build: 
       context: .
@@ -26,7 +39,11 @@ services:
     depends_on:
       - redis
       - rebbitmq
+      - postgres
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672
+      DATABASE_URL: postgresql://rick:Rick_Suncheazzz@postgres:5432/fluffy
+volumes:
+  pgdata:

@@ -17,7 +17,7 @@ export class WebsocketGateway implements OnModuleInit {
     @SubscribeMessage("NewMessage")
     onNewMessage(@MessageBody() body: any){
         this.server.emit("onMessage", {
-            msg: "New Message",
+            msg: " Message",
             content: body
         })
     }
