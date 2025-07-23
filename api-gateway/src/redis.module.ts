@@ -7,7 +7,7 @@ import Redis from 'ioredis';
       provide: 'REDIS',
       useFactory: async () => {
         return new Redis({
-          host: 'localhost',
+          host: 'redis',
           port: 6379,
         });
       },

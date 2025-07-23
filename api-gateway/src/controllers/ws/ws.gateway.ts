@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { SubscribeMessage, WebSocketGateway, MessageBody, WebSocketServer, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, ConnectedSocket } from "@nestjs/websockets";
 import { Socket } from "socket.io"
@@ -10,11 +10,10 @@ const TTL = 30;
 
 @Injectable()
 @WebSocketGateway({path: "/ws", cors: {origin: "*", credentials: true}})
-export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     // private server!: Server;
 
-    private readonly logger = new Logger(WebsocketGateway.name);
     private socketMap: Map<string, Set<Socket>> = new Map();
 
     constructor(
@@ -23,7 +22,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     ){}
 
     afterInit() {
-        this.logger.log("WebSocket server initialised");
+        console.log("WebSocket server initialised");
     }
 
     async handleConnection(client: Socket) {
@@ -44,7 +43,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
                 await this.redis.set(ONLINE_KEY(userId), process.env.HOSTNAME ?? "GW", "EX", TTL);
             });
 
-            this.logger.debug(`User ${userId} connected (${client.id})`);
+            console.log(`User ${userId} connected (${client.id})`);
         }catch(err){
             client.emit("error", "unauthorized");
             client.disconnect(true);
@@ -58,17 +57,21 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
             set.delete(client);
             if(set.size === 0) this.socketMap.delete(userId)
         }
-        this.logger.debug(`Socket ${client.id} disconected`)
+        console.log(`Socket ${client.id} disconected`)
     }
 
     pushToChat(chatId: string, payload: any){
+        let delivered = 0;
+
         for(const Sockets of this.socketMap.values()){
             for(const socket of Sockets){
                 if(socket.data.chats?.has(chatId)){
                     socket.emit("chat.message", payload);
+                    delivered++;
                 }
             }
         }
+        return delivered;
     }
 
     @SubscribeMessage("subscribe.chat")

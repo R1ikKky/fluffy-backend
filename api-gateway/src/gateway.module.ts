@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
-import { WebsocketGateway } from "./controllers/ws/ws.gateway";
+import { WsGateway } from "./controllers/ws/ws.gateway";
+import { RabbitListener } from "./controllers/ws/rabbit.listener";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { JwtModule } from "@nestjs/jwt";
 import { RedisModule } from "./redis.module";
@@ -29,6 +30,6 @@ import { ConfigModule } from "@nestjs/config";
         RedisModule
     ],
     controllers: [],
-    providers: [WebsocketGateway]
+    providers: [WsGateway, RabbitListener]
 })
 export class GatewayModule {}
