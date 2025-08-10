@@ -18,8 +18,5 @@
     {
       "path": "./apps/msvc_message"
     },
-    {
-      "path": "./apps/msvc_media"
-    }
   ]
 }
