@@ -25,9 +25,6 @@ export class UserEntity {
     @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
     createdAt!: Date;
 
-    @Column({ type: "text" })
-    description!: string
-
     @OneToMany(() => RefreshEntity, (r) => r.user)
     refreshTokens!: RefreshEntity[];
 
