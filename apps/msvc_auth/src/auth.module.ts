@@ -7,6 +7,8 @@ import { JwtModule } from "@nestjs/jwt";
 import * as fs from "fs"
 import IORedis, { Redis } from 'ioredis';
 import { connect, AmqpConnectionManager } from "amqp-connection-manager";
+import { PasswordService } from "./services/password.service";
+import { RefreshEntity } from "./entities/refresh.entity";
 
 @Module({
     imports: [
@@ -60,10 +62,8 @@ import { connect, AmqpConnectionManager } from "amqp-connection-manager";
         AuthService,
         OauthService,
         PasswordService,
-
-        UserRepo,
-        RefreshRepo,
-        RateRepo,
+        RateService,
+        TokenService
 
         {
             provide: "REDIS",

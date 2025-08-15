@@ -28,5 +28,4 @@ export class UserEntity {
     @OneToMany(() => RefreshEntity, (r) => r.user)
     refreshTokens!: RefreshEntity[];
 
-
 }
