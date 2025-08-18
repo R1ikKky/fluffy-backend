@@ -9,6 +9,7 @@ import IORedis, { Redis } from 'ioredis';
 import { connect, AmqpConnectionManager } from "amqp-connection-manager";
 import { PasswordService } from "./services/password.service";
 import { RefreshEntity } from "./entities/refresh.entity";
+import { AuthService } from "./services/auth.service";
 
 @Module({
     imports: [
