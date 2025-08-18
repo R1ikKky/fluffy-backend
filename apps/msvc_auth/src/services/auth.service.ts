@@ -1,4 +1,4 @@
-import { Inject, Injectable, HttpException, HttpStatus, ConflictException } from "@nestjs/common";
+import { Inject, Injectable, HttpException, HttpStatus, ConflictException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/user.entity";
 import { DataSource, Repository } from "typeorm";
@@ -11,6 +11,8 @@ import { TokensDto } from "../dto/tokens.dto";
 import { JwtService } from "@nestjs/jwt";
 import { AmqpConnectionManager } from "amqp-connection-manager";
 import { Channel } from "amqplib";
+import { LoginDto } from "../dto/login.dto";
+import { TokenService } from "./token.service";
 
 
 @Injectable()
@@ -53,15 +55,17 @@ export class AuthService {
         private readonly cfg: ConfigService,
         private readonly jwt: JwtService,
         private readonly PasswordService: PasswordService,
+        private readonly TokenService: TokenService,
         @Inject("REDIS") private readonly redis: Redis,
         @Inject('AMQP') private readonly amqp: AmqpConnectionManager | null, 
     ) {}
 
+
     async register (dto: RegisterDto, ip?: string): Promise<TokensDto> {
         const email = this.normalizeEmail(dto.email);
 
-        await this.enforceRate(`login:ip:${ ip ?? "na" }`, 10, 30_000);
-        await this.enforceRate(`login:ip:${ email }`, 8, 60_000);
+        await this.enforceRate(`register:ip:${ ip ?? "na" }`, 10, 30_000);
+        await this.enforceRate(`register:ip:${ email }`, 8, 60_000);
 
         const exists = await this.usersRepo.findOne({ where: { email } });
         if (exists) throw new ConflictException("email already registered");
@@ -87,6 +91,31 @@ export class AuthService {
         this.publish("auth.topic", "user.registered", { userId: user.id, email }); 
 
         const access = await this.signAccess(user)
-        return { access, refresh: refresh.token, ttl: String(this.cfg.get("ACCESS_TTL_MS") ?? 900) }
+        return { access, refresh: refresh.token, ttl: String(this.cfg.get("ACCESS_TTL") ?? 900) }
     }
+
+
+    async login(dto: LoginDto, ip?: string): Promise<TokensDto>{
+        const email = this.normalizeEmail(dto.email);
+
+        await this.enforceRate(`login:ip:${ ip ?? "na" }`, 10, 30_000);
+        await this.enforceRate(`login:ip:${ email }`, 8, 60_000);
+
+        const user = await this.usersRepo.findOne({ where: { email } })
+        if (!user) throw new UnauthorizedException("invalid credentials(no email in db found)")
+        
+        const ok = await this.PasswordService.verify(dto.password, user.passHash)
+        if(!ok) throw new UnauthorizedException("invalid credentials(password doesnt match)")
+
+        if (this.PasswordService.needsRehash(user.passHash)){
+            const newHash = await this.PasswordService.hash(dto.password)
+            await this.usersRepo.update(user.id, { passHash: newHash })
+        }
+
+        const refreshToken = await this.TokenService.issueRefresh(user.id, ip)
+        const accessToken = await this.TokenService.signAccess(user)
+        return { access: accessToken, refresh: refreshToken.token, ttl: String(this.cfg.get("ACCESS_TTL") ?? 900) }
+    }
+
+
 }
