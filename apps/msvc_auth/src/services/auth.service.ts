@@ -1,7 +1,7 @@
 import { Inject, Injectable, HttpException, HttpStatus, ConflictException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/user.entity";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, IsNull, MoreThan, Repository } from "typeorm";
 import { RefreshEntity } from "../entities/refresh.entity";
 import { ConfigService } from "@nestjs/config";
 import { PasswordService } from "./password.service";
@@ -13,10 +13,14 @@ import { AmqpConnectionManager } from "amqp-connection-manager";
 import { Channel } from "amqplib";
 import { LoginDto } from "../dto/login.dto";
 import { TokenService } from "./token.service";
+import { RefreshDto } from "../dto/refresh.dto";
 
 
 @Injectable()
 export class AuthService {
+
+    private readonly AccessTtlSec: number;  
+    private readonly RefreshTtlMs: number;
 
     private normalizeEmail(email: string): string {
         return email.trim().toLowerCase();
@@ -44,13 +48,12 @@ export class AuthService {
                     persistent: true
                 });
             });
-        } catch {
-
-        }
+        } catch {}
     }
 
     constructor (
         @InjectRepository(UserEntity) private readonly usersRepo: Repository<UserEntity>,
+        @InjectRepository(RefreshEntity) private readonly refreshRepo: Repository<RefreshEntity>,
         private readonly ds: DataSource,
         private readonly cfg: ConfigService,
         private readonly jwt: JwtService,
@@ -58,14 +61,17 @@ export class AuthService {
         private readonly TokenService: TokenService,
         @Inject("REDIS") private readonly redis: Redis,
         @Inject('AMQP') private readonly amqp: AmqpConnectionManager | null, 
-    ) {}
+    ) {
+        this.AccessTtlSec = Number(cfg.get("ACCESS_TTL_SEC") ?? 900);
+        this.RefreshTtlMs = Number(cfg.get("REFRESH_TTL_SEC") ?? 2_592_000) * 1000;
+    }
 
 
     async register (dto: RegisterDto, ip?: string): Promise<TokensDto> {
         const email = this.normalizeEmail(dto.email);
 
-        await this.enforceRate(`register:ip:${ ip ?? "na" }`, 10, 30_000);
-        await this.enforceRate(`register:ip:${ email }`, 8, 60_000);
+        await this.enforceRate(`register:ip:${ ip ?? "na" }`, 8, 30_000);
+        await this.enforceRate(`register:ip:${ email }`, 6, 60_000);
 
         const exists = await this.usersRepo.findOne({ where: { email } });
         if (exists) throw new ConflictException("email already registered");
@@ -91,7 +97,7 @@ export class AuthService {
         this.publish("auth.topic", "user.registered", { userId: user.id, email }); 
 
         const access = await this.signAccess(user)
-        return { access, refresh: refresh.token, ttl: String(this.cfg.get("ACCESS_TTL") ?? 900) }
+        return { access, refresh: refresh.token, ttl: this.AccessTtlSec }
     }
 
 
@@ -105,7 +111,7 @@ export class AuthService {
         if (!user) throw new UnauthorizedException("invalid credentials(no email in db found)")
         
         const ok = await this.PasswordService.verify(dto.password, user.passHash)
-        if(!ok) throw new UnauthorizedException("invalid credentials(password doesnt match)")
+        if(!ok) throw new UnauthorizedException("invalid credentials(password doesn't match)")
 
         if (this.PasswordService.needsRehash(user.passHash)){
             const newHash = await this.PasswordService.hash(dto.password)
@@ -114,8 +120,45 @@ export class AuthService {
 
         const refreshToken = await this.TokenService.issueRefresh(user.id, ip)
         const accessToken = await this.TokenService.signAccess(user)
-        return { access: accessToken, refresh: refreshToken.token, ttl: String(this.cfg.get("ACCESS_TTL") ?? 900) }
+        return { access: accessToken, refresh: refreshToken.token, ttl: this.AccessTtlSec }
     }
 
+    async refteshTokens(dto: RefreshDto, ip?: string): Promise<TokensDto>{
+        const now = new Date();
 
+        const current = await this.refreshRepo.findOne({
+            where: {
+                token: dto.refresh,
+                revokedAt: IsNull(),
+                expiresAt: MoreThan(now),
+            },
+        });
+
+        if(!current) throw new UnauthorizedException("invalid refresh token");
+        
+        const user = await this.usersRepo.findOne({ where: { id: current.userId } })
+        if(!user) throw new UnauthorizedException("invalid refresh token")
+
+        let newRefresh!: RefreshEntity
+
+        await this.ds.transaction(async (em) => {
+            await em.getRepository(RefreshEntity).update({ token: current.token }, { revokedAt: now })
+
+            newRefresh = await em.getRepository(RefreshEntity).save({
+                userId: user.id,
+                issuedAt: now,
+                expiresAt: new Date(now.getTime() + this.RefreshTtlMs),
+                ip
+            });
+        });
+
+        const access = await this.TokenService.signAccess(user);
+        return { access, refresh: newRefresh.token, ttl: this.AccessTtlSec }
+        
+    }
+
+    async logout(dto: RefreshDto): Promise<{ ok: true }> {
+        await this.refreshRepo.update({ token: dto.refresh }, { revokedAt: new Date() });
+        return { ok: true };
+    }
 }
