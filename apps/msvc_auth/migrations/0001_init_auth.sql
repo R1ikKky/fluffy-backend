@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   issued_at    timestamptz NOT NULL DEFAULT now(),
   expires_at   timestamptz NOT NULL,
   revoked_at   timestamptz,
-  ip           inet
+  ip           inet,
+  ua           text
 );
 
 CREATE INDEX IF NOT EXISTS idx_refresh_user_expires ON refresh_tokens(user_id, expires_at);

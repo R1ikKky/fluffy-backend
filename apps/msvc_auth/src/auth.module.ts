@@ -11,6 +11,7 @@ import { PasswordService } from "./services/password.service";
 import { RefreshEntity } from "./entities/refresh.entity";
 import { AuthService } from "./services/auth.service";
 import { TokenService } from "./services/token.service";
+import { AuthController } from "./controllers/auth.controller";
 
 @Module({
     imports: [

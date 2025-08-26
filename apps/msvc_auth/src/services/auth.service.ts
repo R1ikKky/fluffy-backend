@@ -66,8 +66,9 @@ export class AuthService {
         this.RefreshTtlMs = Number(cfg.get("REFRESH_TTL_SEC") ?? 2_592_000) * 1000;
     }
 
+    //---//
 
-    async register (dto: RegisterDto, ip?: string): Promise<TokensDto> {
+    async register (dto: RegisterDto, ip?: string, ua?: string): Promise<TokensDto> {
         const email = this.normalizeEmail(dto.email);
 
         await this.enforceRate(`register:ip:${ ip ?? "na" }`, 8, 30_000);
@@ -90,7 +91,8 @@ export class AuthService {
                 userId: user.id,
                 issuedAt: now,
                 expiresIn: new Date(now.getTime() + refreshTTL),
-                ip
+                ip,
+                userAgent: ua
             })
         })
 
@@ -101,7 +103,7 @@ export class AuthService {
     }
 
 
-    async login(dto: LoginDto, ip?: string): Promise<TokensDto>{
+    async login(dto: LoginDto, ip?: string, ua?: string): Promise<TokensDto>{
         const email = this.normalizeEmail(dto.email);
 
         await this.enforceRate(`login:ip:${ ip ?? "na" }`, 10, 30_000);
@@ -118,12 +120,12 @@ export class AuthService {
             await this.usersRepo.update(user.id, { passHash: newHash })
         }
 
-        const refreshToken = await this.TokenService.issueRefresh(user.id, ip)
+        const refreshToken = await this.TokenService.issueRefresh(user.id, ip, ua)
         const accessToken = await this.TokenService.signAccess(user)
         return { access: accessToken, refresh: refreshToken.token, ttl: this.AccessTtlSec }
     }
 
-    async refteshTokens(dto: RefreshDto, ip?: string): Promise<TokensDto>{
+    async refteshTokens(dto: RefreshDto, ip?: string, ua?: string): Promise<TokensDto> {
         const now = new Date();
 
         const current = await this.refreshRepo.findOne({
@@ -148,7 +150,7 @@ export class AuthService {
                 userId: user.id,
                 issuedAt: now,
                 expiresAt: new Date(now.getTime() + this.RefreshTtlMs),
-                ip
+                ip, userAgent: ua,
             });
         });
 

@@ -25,4 +25,7 @@ export class RefreshEntity {
 
     @Column({ type: 'inet', nullable: true })
     ip?: string | null;
+
+    @Column({ name: "ua", type: "text", nullable: true })
+    userAgent?: string | null; 
 }
