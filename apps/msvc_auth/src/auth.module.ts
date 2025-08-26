@@ -48,8 +48,13 @@ import { AuthController } from "./controllers/auth.controller";
                     };
                 }
 
+                const secret = cfg.get<string>("JWT_SECRET")
+                if (!secret) {
+                    console.log("no secret");
+                    throw new Error("JWT_SECRET is not defined");
+                }
                 return {
-                    secret: cfg.get<string>("JWT_SECRET") ?? console.log("no secret"),
+                    secret,
                     signOptions: { expiresIn: cfg.get<string>("ACCESS_TTL") ?? "15m" },
                 };
             },
@@ -58,15 +63,15 @@ import { AuthController } from "./controllers/auth.controller";
 
     controllers: [
         AuthController,
-        OauthController,
+        //OauthController,
     ],
 
     providers: [
         AuthService,
-        OauthService,
+        //OauthService,
         PasswordService,
-        RateService,
-        TokenService
+        //RateService,
+        TokenService,
 
         {
             provide: "REDIS",

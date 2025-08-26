@@ -21,14 +21,14 @@ export class TokenService {
         this.refreshTtlMs = Number(this.cfg.get("REFRESH_TTL_SEC") ?? 2_592_000) * 1000;
     }
 
-    async issueRefresh(userId: string, ip?: string, ua?: String): Promise<RefreshEntity>{
+    async issueRefresh(userId: string, ip?: string, ua?: string): Promise<RefreshEntity>{
         const now = new Date();
         return this.refreshRepo.save({
             userId,
             issuedAt: now,
-            expiresIn: new Date(now.getDate() + this.refreshTtlMs),
+            expiresAt: new Date(now.getTime() + this.refreshTtlMs),
             ip,
-            userAgent: ua
+            userAgent: ua,
         });
     }
 
