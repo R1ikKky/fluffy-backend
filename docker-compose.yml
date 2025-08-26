@@ -60,7 +60,7 @@ services:
   msvc_auth:
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: apps/msvc_auth/Dockerfile
     container_name: msvc_auth
     ports:
       - "3001:3001"

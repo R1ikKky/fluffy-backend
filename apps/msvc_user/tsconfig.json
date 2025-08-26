@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "../msvc_auth"
+    },
+    {
       "path": "./tsconfig.app.json"
     }
   ]

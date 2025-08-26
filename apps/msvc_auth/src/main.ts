@@ -28,7 +28,6 @@ async function bootstrap() {
     }),
   );
 
-  app.setGlobalPrefix("v1");
   app.enableShutdownHooks();
 
   const port = Number(cfg.get("AUTH_PORT") ?? "3001");
