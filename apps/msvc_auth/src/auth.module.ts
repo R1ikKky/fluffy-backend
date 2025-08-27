@@ -5,13 +5,13 @@ import { UserEntity } from "./entities/user.entity";
 import { JwtModule } from "@nestjs/jwt";
 
 import * as fs from "fs"
-import IORedis, { Redis } from 'ioredis';
 import { connect, AmqpConnectionManager } from "amqp-connection-manager";
 import { PasswordService } from "./services/password.service";
 import { RefreshEntity } from "./entities/refresh.entity";
 import { AuthService } from "./services/auth.service";
 import { TokenService } from "./services/token.service";
 import { AuthController } from "./controllers/auth.controller";
+import { RedisProvider } from "./redis.provider";
 
 @Module({
     imports: [
@@ -73,20 +73,13 @@ import { AuthController } from "./controllers/auth.controller";
         //RateService,
         TokenService,
 
-        {
-            provide: "REDIS",
-            inject: [ConfigService],
-            useFactory: (cfg: ConfigService): Redis => {
-                const url = cfg.get<string>("REDIS_URL") ?? 'redis://127.0.0.1:6379';
-                return new IORedis(url, { maxRetriesPerRequest: null });
-            },
-        },
+        RedisProvider,
 
         {
             provide: "AMQP",
             inject: [ConfigService],
             useFactory: (cfg: ConfigService): AmqpConnectionManager => {
-                const url  = cfg.get<string>("RABBIT_URL");
+                const url  = cfg.get<string>("RABBITMQ_URI");
                 if(!url) return null as unknown as AmqpConnectionManager
                 return connect([url], {reconnectTimeInSeconds: 5})
             },
