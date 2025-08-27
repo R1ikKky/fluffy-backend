@@ -2,9 +2,6 @@
   "name": "@fluffy-backend/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {
-     "build": "nx build msvc_chat --configuration=production"
-  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -20,13 +17,14 @@
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
+    "@types/amqplib": "^0.10.7",
     "@types/node": "~18.16.9",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "nx": "21.2.2",
     "prettier": "^2.6.2",
     "tslib": "^2.3.0",
-    "typescript": "~5.8.2",
+    "typescript": "~5.4.5",
     "typescript-eslint": "^8.29.0",
     "webpack-cli": "^5.1.4"
   },
@@ -37,10 +35,20 @@
   ],
   "dependencies": {
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/typeorm": "^11.0.0",
+    "amqp-connection-manager": "^4.1.14",
+    "amqplib": "^0.10.8",
+    "argon2": "^0.44.0",
     "axios": "^1.6.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "pg": "^8.16.3",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "typeorm": "^0.3.25"
   }
 }
