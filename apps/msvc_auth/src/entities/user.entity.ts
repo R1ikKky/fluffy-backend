@@ -16,11 +16,11 @@ export class UserEntity {
     @Column({ name: 'is_verified', type: 'boolean', default: false })
     isVerified!: boolean;
 
-    @Column({ name: "first_name" })
-    firstName!: string;
+    @Column({ name: "first_name", type: "text", nullable: true })
+    firstName!: string | null;
 
-    @Column({ name: "second_name" })
-    secondName!: string;
+    @Column({ name: "second_name", type: "text", nullable: true })
+    secondName!: string | null;
 
     @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
     createdAt!: Date;

@@ -25,7 +25,8 @@ import { RedisProvider } from "./redis.provider";
                 type: "postgres",
                 url: cfg.get<string>("POSTGRES_URL"),
                 autoLoadEntities: true,
-                synchronize: false,
+                synchronize: true,
+                entities: [UserEntity, RefreshEntity],
                 logging: cfg.get('NODE_ENV') !== 'production'
             })
         }),

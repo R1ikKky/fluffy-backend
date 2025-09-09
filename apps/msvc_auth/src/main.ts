@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AuthModule, { cors: false });
   const cfg = app.get(ConfigService);
 
-  const origin = cfg.get<string>("FRONT_ORIGIN") ?? 'http://localhost:5173';
+  const origin = cfg.get<string>("CORS_ORIGIN") ?? 'http://localhost:3000';
 
   app.enableCors({
     origin,
@@ -30,8 +30,10 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
-  const port = Number(cfg.get("AUTH_PORT") ?? "3001");
-  app.listen(port);
+  const port = Number(cfg.get('AUTH_PORT')) ||
+    Number(process.env.PORT) ||
+    3001;
+   await app.listen(port, "0.0.0.0");
   console.log(`auth-service: http://localhost:${port}  (CORS origin: ${origin})`);
 }
 

@@ -79,7 +79,6 @@ export class AuthService {
 
         const passHash = await this.PasswordService.hash(dto.password);
 
-        const refreshTTL = Number(this.cfg.get('REFRESH_TTL_MS') ?? 2592000000);
         const now = new Date();
 
         let user!: UserEntity
@@ -88,11 +87,12 @@ export class AuthService {
         await this.ds.transaction(async (em) => {
             user = await em.getRepository(UserEntity).save({ email, passHash })
             refresh = await em.getRepository(RefreshEntity).save({
-                userId: user.id,
+                user,
                 issuedAt: now,
-                expiresIn: new Date(now.getTime() + refreshTTL),
+                expiresAt: new Date(now.getTime() + this.RefreshTtlMs),
                 ip,
-                userAgent: ua
+                userAgent: ua,
+                user_id: user.id
             })
         })
 
@@ -138,7 +138,7 @@ export class AuthService {
 
         if(!current) throw new UnauthorizedException("invalid refresh token");
         
-        const user = await this.usersRepo.findOne({ where: { id: current.userId } })
+        const user = await this.usersRepo.findOne({ where: { id: current.user.id } })
         if(!user) throw new UnauthorizedException("invalid refresh token")
 
         let newRefresh!: RefreshEntity
@@ -147,10 +147,11 @@ export class AuthService {
             await em.getRepository(RefreshEntity).update({ token: current.token }, { revokedAt: now })
 
             newRefresh = await em.getRepository(RefreshEntity).save({
-                userId: user.id,
+                user,
                 issuedAt: now,
                 expiresAt: new Date(now.getTime() + this.RefreshTtlMs),
-                ip, userAgent: ua,
+                ip,
+                userAgent: ua
             });
         });
 
