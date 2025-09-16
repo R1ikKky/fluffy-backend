@@ -19,7 +19,6 @@ import { RefreshDto } from "../dto/refresh.dto";
 @Injectable()
 export class AuthService {
 
-    private readonly AccessTtlSec: number;  
     private readonly RefreshTtlMs: number;
 
     private normalizeEmail(email: string): string {
@@ -30,11 +29,6 @@ export class AuthService {
         const cnt = await this.redis.incr(key)
         if(cnt === 1) await this.redis.pexpire(key, windowsMs)
         if(cnt > limit) throw new HttpException("rate limit", HttpStatus.TOO_MANY_REQUESTS)
-    }
-
-    private async signAccess(user: UserEntity): Promise<string> {
-        const payload = { sub: user.id, ver: user.isVerified ? 1 : 0 };
-        return this.jwt.signAsync(payload)
     }
 
     private publish(exchange: string, routingKey: string, payload: unknown) {
@@ -62,7 +56,6 @@ export class AuthService {
         @Inject("REDIS") private readonly redis: Redis,
         @Inject('AMQP') private readonly amqp: AmqpConnectionManager | null, 
     ) {
-        this.AccessTtlSec = Number(cfg.get("ACCESS_TTL_SEC") ?? 900);
         this.RefreshTtlMs = Number(cfg.get("REFRESH_TTL_SEC") ?? 2_592_000) * 1000;
     }
 
@@ -98,8 +91,8 @@ export class AuthService {
 
         this.publish("auth.topic", "user.registered", { userId: user.id, email }); 
 
-        const access = await this.signAccess(user)
-        return { access, refresh: refresh.token, ttl: this.AccessTtlSec }
+        const accessToken = await this.TokenService.signAccess(user)
+        return { access: accessToken, refresh: refresh.token}
     }
 
 
@@ -122,7 +115,7 @@ export class AuthService {
 
         const refreshToken = await this.TokenService.issueRefresh(user.id, ip, ua)
         const accessToken = await this.TokenService.signAccess(user)
-        return { access: accessToken, refresh: refreshToken.token, ttl: this.AccessTtlSec }
+        return { access: accessToken, refresh: refreshToken.token }
     }
 
     async refteshTokens(dto: RefreshDto, ip?: string, ua?: string): Promise<TokensDto> {
@@ -155,8 +148,8 @@ export class AuthService {
             });
         });
 
-        const access = await this.TokenService.signAccess(user);
-        return { access, refresh: newRefresh.token, ttl: this.AccessTtlSec }
+        const accessToken = await this.TokenService.signAccess(user);
+        return { access: accessToken, refresh: newRefresh.token }
         
     }
 

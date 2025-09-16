@@ -63,7 +63,7 @@ services:
       dockerfile: apps/msvc_auth/Dockerfile
     container_name: msvc_auth
     ports:
-      - "3001:3001"
+      - "8080:8080"
     depends_on:
       - redis
       - rabbitmq
