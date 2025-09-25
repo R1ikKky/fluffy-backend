@@ -2,25 +2,37 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { UserModule } from './user.module';
 import { ConfigService } from '@nestjs/config';
+import { SwaggerModule } from '@nestjs/swagger';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(UserModule, { cors: false });
   const cfg = app.get(ConfigService);
 
-  const origin = cfg.get<string>('FRONT_ORIGIN') ?? 'http://localhost:5173';
+  const swaggerFile = path.resolve(__dirname, "../openapi.json")
+  const document = JSON.parse(fs.readFileSync(swaggerFile, "utf-8"))
+
+  SwaggerModule.setup("/docs", app, document)
+
+  const origin = cfg.get<string>('FRONT_ORIGIN') ?? 'http://100.68.110.50:5173';
+
   app.enableCors({
     origin, credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400,
   });
+
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: {enableImplicitConversion: true}
   }));
   app.enableShutdownHooks();
 
+  // app.use(["/docs", "/docs-json"])
+
   const port = Number(cfg.get('PORT') ?? 3002);
-  await app.listen(port);
+  await app.listen(port, "0.0.0.0");
   Logger.log(
     `user-svc: http://100.115.60.97:${port} (CORS: ${origin})`
   );

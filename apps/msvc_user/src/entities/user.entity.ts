@@ -1,43 +1,54 @@
-import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { ContactEntity } from "./contact.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { ContactEntity } from './contact.entity';
 
-@Entity({ name: "users" })
+@Entity({ name: 'users' })
 export class UserEntity {
-    @PrimaryGeneratedColumn("uuid")
-    id!: string;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-    // @Index({ unique: true })
-    // @Column({ type: "citext", unique: true })
-    // email!: string;
+  @Index({ unique: true })
+  @Column({ nullable: true, type: 'citext', unique: true })
+  username?: string | null;
 
-    @Index({ unique: true })
-    @Column({ name: "first_name", type: 'citext', unique: true })
-    firstName?: string;
+  @Column({ name: 'first_name', type: 'text', default: '', nullable: true })
+  firstName!: string | null;
 
-    @Column({ name: 'second_name', type: 'text', default: "" })
-    secondName?: string;
+  @Column({ name: 'second_name', type: 'text', default: '', nullable: true })
+  secondName?: string | null;
 
-    // @Column({name: "pass_hash", type: "text"})
-    // passHash!: string;
+  @Column({ name: 'avatar_url', type: 'text', nullable: true })
+  avatarUrl?: string | null;
 
-    @Column({ name: "avatar_url", type: "text", unique: true })
-    avatarUrl?: string | null;
+  @Column({ type: 'text', nullable: true })
+  bio?: string | null;
 
-    // @Column({ name: 'is_verified', type: 'boolean', default: false })
-    // isVerified!: boolean;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt!: Date;
 
-    @Column({ type: "text", nullable: true })
-    bio?: string | null;  
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt!: Date;
 
-    @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-    createdAt!: Date;
+  @OneToMany(() => ContactEntity, (c) => c.owner)
+  myContacts!: ContactEntity;
 
-    @UpdateDateColumn({ name: 'updated_at', type: "timestamptz" })
-    updatedAt!: Date;
+  @OneToMany(() => ContactEntity, (c) => c.peer)
+  inContacts!: ContactEntity;
 
-    @OneToMany(() => ContactEntity, (c) => c. owner)
-    myContacts!: ContactEntity;
+  // @Column({name: "pass_hash", type: "text"})
+  // passHash!: string;
 
-    @OneToMany(() => ContactEntity, (c) => c. peer)
-    inContacts!: ContactEntity;
+  // @Index({ unique: true })
+  // @Column({ type: "citext", unique: true })
+  // email!: string;
+
+  // @Column({ name: 'is_verified', type: 'boolean', default: false })
+  // isVerified!: boolean;
 }

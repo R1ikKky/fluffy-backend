@@ -4,7 +4,11 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserEntity } from "./entities/user.entity";
 import { ContactEntity } from "./entities/contact.entity";
 import { UserService } from "./services/user.service";
-
+import { UserController } from "./controllers/user.controller";
+import { ContactsService } from "./services/contacts.service";
+import { PresenceService } from "./services/presence.service";
+import { ContactsController } from "./controllers/contacts.controller";
+import { PresenceController } from "./controllers/presence.controller";
 import IORedis, { Redis } from 'ioredis';
 
 @Module({

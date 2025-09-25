@@ -8,7 +8,6 @@ import { PasswordService } from "./password.service";
 import { Redis } from 'ioredis';
 import { RegisterDto } from "../dto/register.dto";
 import { TokensDto } from "../dto/tokens.dto";
-import { JwtService } from "@nestjs/jwt";
 import { AmqpConnectionManager } from "amqp-connection-manager";
 import { Channel } from "amqplib";
 import { LoginDto } from "../dto/login.dto";
@@ -50,7 +49,6 @@ export class AuthService {
         @InjectRepository(RefreshEntity) private readonly refreshRepo: Repository<RefreshEntity>,
         private readonly ds: DataSource,
         private readonly cfg: ConfigService,
-        private readonly jwt: JwtService,
         private readonly PasswordService: PasswordService,
         private readonly TokenService: TokenService,
         @Inject("REDIS") private readonly redis: Redis,
@@ -154,7 +152,7 @@ export class AuthService {
     }
 
     async logout(dto: RefreshDto): Promise<{ ok: true }> {
-        await this.refreshRepo.update({ token: dto.refresh }, { revokedAt: new Date() });
+        await this.refreshRepo.delete({ token: dto.refresh });
         return { ok: true };
     }
 }
