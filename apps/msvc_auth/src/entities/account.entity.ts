@@ -1,8 +1,8 @@
 import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { RefreshEntity } from "./refresh.entity";
 
-@Entity({ name: "users" })
-export class UserEntity {
+@Entity({ name: "accounts" })
+export class AccountEntity {
     @PrimaryGeneratedColumn("uuid")
     id!: string;
 
@@ -16,16 +16,11 @@ export class UserEntity {
     @Column({ name: 'is_verified', type: 'boolean', default: false })
     isVerified!: boolean;
 
-    @Column({ name: "first_name", type: "text", nullable: true })
-    firstName!: string | null;
-
-    @Column({ name: "second_name", type: "text", nullable: true })
-    secondName!: string | null;
-
     @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
     createdAt!: Date;
 
-    @OneToMany(() => RefreshEntity, (r) => r.user)
+    @OneToMany(() => RefreshEntity, (r) => r.account)
     refreshTokens!: RefreshEntity[];
 
+    
 }

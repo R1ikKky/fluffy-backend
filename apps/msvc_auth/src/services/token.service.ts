@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { RefreshEntity } from "../entities/refresh.entity";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
-import { UserEntity } from "../entities/user.entity";
+import { UserEntity } from "../entities/account.entity";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()

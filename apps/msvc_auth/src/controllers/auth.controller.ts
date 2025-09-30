@@ -7,7 +7,7 @@ import { RefreshDto } from "../dto/refresh.dto";
 
 type ReqLike = { ip?: string; headers?: Record<string, string | undefined> }
 
-@Controller()
+@Controller("auth")
 export class AuthController {
     constructor(private readonly auth: AuthService) {}
 

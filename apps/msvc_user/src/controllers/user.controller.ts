@@ -1,20 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Put, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, Patch, Post } from "@nestjs/common";
 import { UserService } from "../services/user.service";
 import { UpdateUserDto } from "../dto/updateUserDto";
+import { StackDto } from "../dto/stackDto";
 
 @Controller('users')
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
-    @Get("get-one/:id")
-    getOne(@Param("id") id: string){
+    @Get("get-one")
+    async getOne(@Headers("X-User-Id") id: string, ){
+        if (!id) throw new BadRequestException('missing x-user-id header');
         return this.userService.getOneById(id);
     }
 
-    @Get("get-stack")
-    getMany(@Query("ids") ids?: string){
-        const list = (ids ?? "").split(",").map(id => id.trim()).filter(Boolean);
-        return this.userService.getManyByIds(list);
+    @Post("get-stack")
+    getMany(@Body() dto: StackDto){
+        const uniqueArr = Array.from(new Set(dto.ids));
+        if (!uniqueArr.length) return []
+        return this.userService.getManyByIds(uniqueArr);
     }
 
     @Get("get-all")
@@ -22,7 +25,7 @@ export class UserController {
         return this.userService.getAll();
     }
 
-    @Put("update-one/:id")
+    @Patch("update-one/:id")
     update(@Param("id") id: string, @Body() body: UpdateUserDto){
         return this.userService.updateOne(id, body)
     }

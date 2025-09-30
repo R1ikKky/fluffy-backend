@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { UserEntity } from "./entities/user.entity";
+import { AccountEntity } from "./entities/account.entity";
 import { JwtModule } from "@nestjs/jwt";
 
 import * as fs from "fs"
@@ -26,11 +26,11 @@ import { RedisProvider } from "./redis.provider";
                 url: cfg.get<string>("POSTGRES_URL"),
                 autoLoadEntities: true,
                 synchronize: true,
-                entities: [UserEntity, RefreshEntity],
+                entities: [AccountEntity, RefreshEntity],
                 logging: cfg.get('NODE_ENV') !== 'production'
             })
         }),
-        TypeOrmModule.forFeature([UserEntity, RefreshEntity]),
+        TypeOrmModule.forFeature([AccountEntity, RefreshEntity]),
 
         JwtModule.registerAsync({
             inject: [ConfigService],

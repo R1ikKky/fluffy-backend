@@ -14,6 +14,9 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: "account_id", type: "uuid", unique: true })
+  accountId!: string;
+
   @Index({ unique: true })
   @Column({ nullable: true, type: 'citext', unique: true })
   username?: string | null;

@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { UserEntity } from "./user.entity";
+import { AccountEntity } from "./account.entity";
 
 @Entity({ name: "refresh_tokens" })
 export class RefreshEntity {
@@ -7,9 +7,9 @@ export class RefreshEntity {
     @PrimaryGeneratedColumn("uuid")
     token!: string;
 
-    @ManyToOne(() => UserEntity, (u) => u.refreshTokens, { onDelete: "CASCADE" })
-    @JoinColumn({ name: "user_id" })
-    user!: UserEntity;
+    @ManyToOne(() => AccountEntity, (a) => a.refreshTokens, { onDelete: "CASCADE" })
+    @JoinColumn({ name: "account_id" })
+    account!: AccountEntity;
 
     @CreateDateColumn({ name: "issued_at", type: "timestamptz" })
     issuedAt!: Date;

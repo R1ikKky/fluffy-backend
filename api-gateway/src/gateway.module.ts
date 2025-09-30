@@ -5,6 +5,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { JwtModule } from "@nestjs/jwt";
 import { RedisModule } from "./redis.module";
 import { ConfigModule } from "@nestjs/config";
+import { JwtGuard } from "./guards/jwt.guard";
+import { HttpModule } from "@nestjs/axios";
+import { UserController } from "./controllers/rest/user.controller";
+import { UserApiService } from "./services/user-api.service";
 
 
 @Module({
@@ -26,10 +30,11 @@ import { ConfigModule } from "@nestjs/config";
         JwtModule.register({
             secret: process.env.JWT_SECRET,
             signOptions: {expiresIn: "15m" }
-        }),
+    }),
+        HttpModule.register({ timeout: 3000 }),
         RedisModule
     ],
-    controllers: [],
-    providers: [WsGateway, RabbitListener]
+    controllers: [UserController],
+    providers: [WsGateway, RabbitListener, JwtGuard, UserApiService]
 })
 export class GatewayModule {}

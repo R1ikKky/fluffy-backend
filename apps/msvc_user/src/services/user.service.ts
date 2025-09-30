@@ -27,8 +27,6 @@ export class UserService {
         return this.usersRepo.find()
     }
     
-    
-    
     async updateOne(userId: string, patch: UpdateUserDto) {
         const user = await this.usersRepo.findOne({ where: { id: userId } })
         if (!user) throw new NotFoundException("user not found")
@@ -72,7 +70,22 @@ export class UserService {
             if(!user) throw new BadRequestException("no user exist")
                 await this.usersRepo.delete({ id: userId });
         }
+
+        async ensureUserforAccount(accountId: string, email: string) {
+            const exists = await this.usersRepo.findOne({ where: { accountId } });
+            if (exists) return exists;
+
+            return this.usersRepo.save({
+                accountId,
+                firstName: null,
+                secondName: null,
+                avatarUrl: null,
+                bio: null,
+            })
+        }
     }
+
+
     // async updatePassword(userId: string, newHash: string): Promise<void> {
         //     await this.usersRepo.update({ id: userId }, { passHash: newHash });
         // }
