@@ -26,11 +26,15 @@ export class UserEntity {
 
   @Column({ name: 'second_name', type: 'text', default: '', nullable: true })
   secondName?: string | null;
+  
+  @Index({ unique: true })
+  @Column({ type: "citext", unique: true, nullable: true })
+  email!: string | null;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
   avatarUrl?: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, default: '' })
   bio?: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

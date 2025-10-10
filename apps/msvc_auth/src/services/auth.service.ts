@@ -1,4 +1,4 @@
-import { Inject, Injectable, HttpException, HttpStatus, ConflictException, UnauthorizedException } from "@nestjs/common";
+import { Inject, Injectable, HttpException, HttpStatus, ConflictException, UnauthorizedException, Logger, OnModuleInit, BadRequestException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { AccountEntity } from "../entities/account.entity";
 import { DataSource, IsNull, MoreThan, Repository } from "typeorm";
@@ -8,18 +8,19 @@ import { PasswordService } from "./password.service";
 import { Redis } from 'ioredis';
 import { RegisterDto } from "../dto/register.dto";
 import { TokensDto } from "../dto/tokens.dto";
-import type { AmqpConnectionManager } from "amqp-connection-manager";
+// import type { AmqpConnectionManager } from "amqp-connection-manager";
 import { LoginDto } from "../dto/login.dto";
 import { TokenService } from "./token.service";
 import { RefreshDto } from "../dto/refresh.dto";
-import { EventPublisher } from "../rabbit/publisher";
-import { AUTH_EXCHANGE, RK_ACCOUNT_CREATED } from "../contracts/auth.events";
+import { ClientProxy } from "@nestjs/microservices";
+import { firstValueFrom } from "rxjs";
+// import { EventPublisher } from "../rabbit/publisher";
+// import { AUTH_EXCHANGE, RK_ACCOUNT_CREATED } from "../contracts/auth.events";
 
 
 @Injectable()
-export class AuthService {
-    private publisher!: EventPublisher;
-
+export class AuthService implements OnModuleInit{
+    private readonly logger = new Logger(AuthService.name);
     private readonly RefreshTtlMs: number;
 
     private normalizeEmail(email: string): string {
@@ -32,21 +33,8 @@ export class AuthService {
         if(cnt > limit) throw new HttpException("rate limit", HttpStatus.TOO_MANY_REQUESTS)
     }
 
-    // private publish(exchange: string, routingKey: string, payload: unknown) {
-    //     try {
-    //         if (!this.amqp) return;
-    //         const ch = this.amqp.createChannel();
-    //         ch.addSetup(async (raw: Channel) => {
-    //             await raw.assertExchange(exchange, "topic", { durable: true })
-    //             raw.publish(exchange, routingKey, Buffer.from(JSON.stringify(payload)), {
-    //                 contentType: "application/json",
-    //                 persistent: true
-    //             });
-    //         });
-    //     } catch {}
-    // }
-
     constructor (
+        @Inject("MSVC_AUTH") private rabbitClient: ClientProxy,
         @InjectRepository(AccountEntity) private readonly accountsRepo: Repository<AccountEntity>,
         @InjectRepository(RefreshEntity) private readonly refreshRepo: Repository<RefreshEntity>,
         private readonly ds: DataSource,
@@ -54,10 +42,13 @@ export class AuthService {
         private readonly PasswordService: PasswordService,
         private readonly TokenService: TokenService,
         @Inject("REDIS") private readonly redis: Redis,
-        @Inject("AMQP") amqp: AmqpConnectionManager, 
     ) {
         this.RefreshTtlMs = Number(cfg.get("REFRESH_TTL_SEC") ?? 2_592_000) * 1000;
-        this.publisher = new EventPublisher(amqp, AUTH_EXCHANGE);
+    }
+
+    async onModuleInit() {
+        await this.rabbitClient.connect();
+        this.logger.log('✅ RabbitMQ client connected');
     }
 
     //---//
@@ -78,6 +69,8 @@ export class AuthService {
         let account!: AccountEntity
         let refresh!: RefreshEntity
 
+        
+        
         await this.ds.transaction(async (em) => {
             account = await em.getRepository(AccountEntity).save({ email, passHash })
             refresh = await em.getRepository(RefreshEntity).save({
@@ -88,18 +81,32 @@ export class AuthService {
                 accountAgent: ua,
                 account_id: account.id
             })
-        })
 
-        // this.publish("auth.topic", "account.registered", { accountId: account.id, email }); 
-        await this.publisher.publish(RK_ACCOUNT_CREATED, {
-            accountId: account.id,
-            email: account.email,
-            ts: new Date().toString()
-        })
+            this.rabbitClient.emit("account.registered", { accountId: account.id, email });
+            this.logger.log('✅ emit call executed');
 
+        })
+        
 
         const accessToken = await this.TokenService.signAccess(account)
         return { access: accessToken, refresh: refresh.token}
+    }
+
+    async deleteAccount(accountId: string){
+
+        const res = await firstValueFrom(
+            this.rabbitClient.send({ cmd: "account.deleted" },{ accountId })
+        );
+        if(!res.ok) {
+            this.logger.error(`❌ Failed to delete user: ${res.reason}`);
+            throw new BadRequestException(res.reason);
+        };
+
+        this.logger.log('✅ User deletion confirmed by msvc_user');
+
+        const acc = await this.accountsRepo.findOne({ where: { id: accountId } })
+        if(!acc) throw new BadRequestException("no account exist")
+        await this.accountsRepo.delete({ id: accountId })
     }
 
 

@@ -1,15 +1,19 @@
 import { Module } from "@nestjs/common";
+import { ClientsModule, Transport } from "@nestjs/microservices";
 
 @Module({
-    providers: [
-        {
-            provide: "AMQP",
-            useFactory: async () => {
-                const conn = (await import("amqp-connection-manager")).connect([process.env.RABBITMQ_URL!]);
-                return conn;
-            }
-        }
+    imports: [
+        ClientsModule.register([
+                    {
+                        name: "MSVC_AUTH",
+                        transport: Transport.RMQ,
+                        options: {
+                            urls: ["amqp://rick:rick@rabbitmq:5672:5672"],
+                            queue: "account.registered"
+                        }
+                    }
+                ])
     ],
-    exports: ["AMQP"],
+    providers: [],
 })
 export class RabbitModule {}

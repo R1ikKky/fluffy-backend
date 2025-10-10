@@ -34,7 +34,7 @@ async function bootstrap() {
     Number(process.env.PORT) ||
     3001;
    await app.listen(port, "0.0.0.0");
-  console.log(`auth-service: http://100.115.60.97:${port}  (CORS origin: ${origin})`);
+  console.log(`auth-service: http://100.126.70.46:${port}  (CORS origin: ${origin})`);
 }
 
 bootstrap();

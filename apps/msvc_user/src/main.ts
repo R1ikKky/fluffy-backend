@@ -28,8 +28,8 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
-      urls: [process.env.RABBITMQ_URI!],
-      queue: "msvc_user_events",
+      urls: ["amqp://rick:rick@rabbitmq:5672"],
+      queue: "account-queue",
       queueOptions: { durable: true },
       noAck: false,
       prefetchCount: 10
@@ -43,12 +43,11 @@ async function bootstrap() {
   }));
   app.enableShutdownHooks();
 
-  // app.use(["/docs", "/docs-json"])
 
   const port = Number(cfg.get('PORT') ?? 3002);
   await app.listen(port, "0.0.0.0");
   Logger.log(
-    `user-svc: http://100.115.60.97:${port} (CORS: ${origin})`
+    `user-svc: http://100.126.70.46:${port} (CORS: ${origin})`
   );
 }
 

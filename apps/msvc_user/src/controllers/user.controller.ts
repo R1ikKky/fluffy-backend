@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, Patch, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post } from "@nestjs/common";
 import { UserService } from "../services/user.service";
 import { UpdateUserDto } from "../dto/updateUserDto";
 import { StackDto } from "../dto/stackDto";
@@ -28,10 +28,5 @@ export class UserController {
     @Patch("update-one/:id")
     update(@Param("id") id: string, @Body() body: UpdateUserDto){
         return this.userService.updateOne(id, body)
-    }
-
-    @Delete("delete-one/:id")
-    async deleteUser(@Param("id") id: string){
-        return this.userService.delete(id);
     }
 }

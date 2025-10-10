@@ -1,17 +1,22 @@
 import { Controller } from "@nestjs/common";
 import { UserService } from "../services/user.service";
-import { EventPattern, Payload } from "@nestjs/microservices";
-import { RK_ACCOUNT_CREATED } from "../contracts/auth.events";
+import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
+import { AccountDto } from "../dto/accountDto";
 
 
 @Controller()
 export class AuthEventsListener {
     constructor(private readonly usersService: UserService) {}
 
-    @EventPattern(RK_ACCOUNT_CREATED)
+    @EventPattern("account.registered")
     async onAccountCreated(
-        @Payload() msg: { accountId: string, email: string; ts: string }
+        @Payload() account: AccountDto
     ) {
-            await this.usersService.ensureUserforAccount(msg.accountId, msg.email);
+        this.usersService.createUser(account);
+    }
+
+    @MessagePattern({ cmd: "account.deleted" })
+    async onAccountDeleted(@Payload() msg: { accountId: string }) {
+        return await this.usersService.deleteUser(msg.accountId);
     }
 }

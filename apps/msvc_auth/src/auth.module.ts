@@ -5,13 +5,14 @@ import { AccountEntity } from "./entities/account.entity";
 import { JwtModule } from "@nestjs/jwt";
 
 import * as fs from "fs"
-import { connect, AmqpConnectionManager } from "amqp-connection-manager";
+// import { connect, AmqpConnectionManager } from "amqp-connection-manager";
 import { PasswordService } from "./services/password.service";
 import { RefreshEntity } from "./entities/refresh.entity";
 import { AuthService } from "./services/auth.service";
 import { TokenService } from "./services/token.service";
 import { AuthController } from "./controllers/auth.controller";
 import { RedisProvider } from "./redis.provider";
+import { ClientsModule, Transport } from "@nestjs/microservices";
 
 @Module({
     imports: [
@@ -60,6 +61,22 @@ import { RedisProvider } from "./redis.provider";
                 };
             },
         }),
+
+
+        ClientsModule.register([
+            {
+                name: "MSVC_AUTH",
+                transport: Transport.RMQ,
+                options: {
+                    urls: ["amqp://rick:rick@rabbitmq:5672"],
+                    queue: "account-queue",
+                    queueOptions: {
+                        durable: true
+                    },
+                }
+            }
+        ]),
+        
     ],
 
     controllers: [
@@ -76,18 +93,9 @@ import { RedisProvider } from "./redis.provider";
 
         RedisProvider,
 
-        {
-            provide: "AMQP",
-            inject: [ConfigService],
-            useFactory: (cfg: ConfigService): AmqpConnectionManager => {
-                const url  = cfg.get<string>("RABBITMQ_URI");
-                if(!url) return null as unknown as AmqpConnectionManager
-                return connect([url], {reconnectTimeInSeconds: 5})
-            },
-        },
     ],
     exports: [
-        JwtModule, TypeOrmModule, "REDIS", "AMQP"
+        JwtModule, TypeOrmModule, "REDIS",  
     ]
 })
 

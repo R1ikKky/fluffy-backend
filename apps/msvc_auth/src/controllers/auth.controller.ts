@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, Param, Post, Req } from "@nestjs/common";
 import { AuthService } from "../services/auth.service";
 import { RegisterDto } from "../dto/register.dto";
 import { TokensDto } from "../dto/tokens.dto";
@@ -9,25 +9,30 @@ type ReqLike = { ip?: string; headers?: Record<string, string | undefined> }
 
 @Controller("auth")
 export class AuthController {
-    constructor(private readonly auth: AuthService) {}
+    constructor(private readonly authService: AuthService) {}
 
     @Post("register")
     register(@Body() dto: RegisterDto, @Req() req: ReqLike): Promise<TokensDto> {
-        return this.auth.register(dto, req.ip, req.headers?.["user-agent"] as string | undefined);
+        return this.authService.register(dto, req.ip, req.headers?.["user-agent"] as string | undefined);
     }
 
     @Post("login")
     login(@Body() dto: LoginDto, @Req() req: ReqLike): Promise<TokensDto> {
-        return this.auth.login(dto, req.ip, req.headers?.["user-agent"] as string | undefined);
+        return this.authService.login(dto, req.ip, req.headers?.["user-agent"] as string | undefined);
     }
 
     @Post("refresh")
     refresh(@Body() dto: RefreshDto, @Req() req: ReqLike){
-        return this.auth.refteshTokens(dto, req.ip, req.headers?.["user-agent"] as string | undefined);
+        return this.authService.refteshTokens(dto, req.ip, req.headers?.["user-agent"] as string | undefined);
     }
 
     @Post("logout")
     logout(@Body() dto: RefreshDto): Promise<{ ok: true }>{
-        return this.auth.logout(dto)
+        return this.authService.logout(dto)
+    }
+ 
+    @Post("delete-one/:id")
+    async deleteAcc(@Param("id") accountId: string){
+        return this.authService.deleteAccount(accountId);
     }
 }

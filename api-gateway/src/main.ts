@@ -21,7 +21,7 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, "0.0.0.0");
-  Logger.log(`HTTP:  http://100.115.60.97:${port}`);
+  Logger.log(`HTTP:  http://100.126.70.46:${port}`);
   Logger.log(`Redis microservice connected to ${process.env.REDIS_HOST ?? 'redis'}:${process.env.REDIS_PORT ?? 6379}`);
 }
 

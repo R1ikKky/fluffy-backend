@@ -10,6 +10,7 @@ import { PresenceService } from "./services/presence.service";
 import { ContactsController } from "./controllers/contacts.controller";
 import { PresenceController } from "./controllers/presence.controller";
 import IORedis, { Redis } from 'ioredis';
+import { AuthEventsListener } from "./listeners/auth.events.listener";
 
 @Module({
     imports: [
@@ -25,7 +26,7 @@ import IORedis, { Redis } from 'ioredis';
         }),
         TypeOrmModule.forFeature([UserEntity, ContactEntity]),
     ],
-    controllers: [UserController, ContactsController, PresenceController],
+    controllers: [UserController, ContactsController, PresenceController, AuthEventsListener],
     providers: [UserService, ContactsService, PresenceService,
         {
         provide: 'REDIS',

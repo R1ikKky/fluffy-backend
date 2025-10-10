@@ -1,11 +1,16 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/user.entity";
 import { In, Repository } from "typeorm";
 import { UpdateUserDto } from "../dto/updateUserDto";
+import { AccountDto } from "../dto/accountDto";
 
 @Injectable()
 export class UserService {
+
+    private readonly logger = new Logger(UserService.name);
+
+
     constructor(
         @InjectRepository(UserEntity) private readonly usersRepo: Repository<UserEntity>,
     ) {}
@@ -64,24 +69,34 @@ export class UserService {
             
         }
         
-        
-        async delete(userId: string): Promise<void> {
-            const user = await this.usersRepo.findOne({ where: { id: userId } })
-            if(!user) throw new BadRequestException("no user exist")
-                await this.usersRepo.delete({ id: userId });
+        async createUser(account: AccountDto) {
+            const exists = await this.usersRepo.findOne({ where: { accountId: account.accountId } });
+            if (exists){
+                this.logger.warn(`Duplicate account creation ignored: ${account.email}`);
+                return;
+            }
+            
+            this.logger.log(`✅ recieved user: ${account.accountId}, ${account.email}`);
+            
+            return this.usersRepo.save({
+                accountId: account.accountId,
+                email: account.email,
+                avatarUrl: null,
+            }) 
         }
 
-        async ensureUserforAccount(accountId: string, email: string) {
-            const exists = await this.usersRepo.findOne({ where: { accountId } });
-            if (exists) return exists;
+        async deleteUser(accountId: string){
+            try{
+                this.logger.log(`✅ recieved user to delete: ${accountId}`);
+                const user = await this.usersRepo.findOne({ where: { accountId: accountId } });
+                if(!user) return { ok: false, reason: "User not found" }
 
-            return this.usersRepo.save({
-                accountId,
-                firstName: null,
-                secondName: null,
-                avatarUrl: null,
-                bio: null,
-            })
+                const res = await this.usersRepo.delete({ accountId: accountId });
+                if(!res.affected) return { ok: false, reason: "User not found2" };
+                return { ok: true };
+            } catch(err) {
+                return { ok: false, reason: err };
+            }
         }
     }
 
@@ -89,28 +104,11 @@ export class UserService {
     // async updatePassword(userId: string, newHash: string): Promise<void> {
         //     await this.usersRepo.update({ id: userId }, { passHash: newHash });
         // }
-    // async findByEmail(email: string): Promise<UserEntity | null> {
-    //     const normalized = email.trim();
+
+    // async findByEmail(id: string): Promise<UserEntity | null> {
     //     return this.usersRepo.findOne({ where: { email: normalized } });
     // }
         
     // async markVerified(userId: string): Promise<void> {
         //     await this.usersRepo.update({ id: userId }, { isVerified: true });
         // }
-    // async create(email: string, passHash: string): Promise<UserEntity> {
-        //     const normalized = email.trim();
-        
-        //     const isEmailExists = await this.findByEmail(email)
-        
-        //     if(isEmailExists) {
-            //         throw new BadRequestException("This email is already tacken")
-            //     }
-            
-            //     const user = this.usersRepo.create({
-                //         email: normalized,
-                //         passHash,
-                //         isVerified: false,
-                //     });
-                //     return await this.usersRepo.save(user);
-                
-                // }
