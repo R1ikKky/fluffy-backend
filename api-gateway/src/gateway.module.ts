@@ -9,6 +9,10 @@ import { JwtGuard } from "./guards/jwt.guard";
 import { HttpModule } from "@nestjs/axios";
 import { UserController } from "./controllers/rest/user.controller";
 import { UserApiService } from "./services/user-api.service";
+import { AuthController } from "./controllers/rest/auth.controller";
+import { AuthApiService } from "./services/auth-api.service";
+import { ContactsApiService } from "./services/contacts-api.service";
+import { ContactsController } from "./controllers/rest/contacts.controller";
 
 
 @Module({
@@ -34,7 +38,7 @@ import { UserApiService } from "./services/user-api.service";
         HttpModule.register({ timeout: 3000 }),
         RedisModule
     ],
-    controllers: [UserController],
-    providers: [WsGateway, RabbitListener, JwtGuard, UserApiService]
+    controllers: [UserController, AuthController, ContactsController],
+    providers: [WsGateway, RabbitListener, JwtGuard, UserApiService, AuthApiService, ContactsApiService]
 })
 export class GatewayModule {}

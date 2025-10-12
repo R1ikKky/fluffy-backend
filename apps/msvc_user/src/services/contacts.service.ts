@@ -16,7 +16,7 @@ export class ContactsService {
         const rows = await this.contactRepo.find({ where: { ownerId } });
         const ids = rows.map(row => row.peerId);
         if (!ids.length) return [];
-        const users = await this.userRepo.find({ where: { id: In(ids) } });
+        const users = await this.userRepo.find({ where: { accountId: In(ids) } });
         return {ids, users};
     }
 
@@ -25,8 +25,8 @@ export class ContactsService {
         const ContactAlreadyExists = await this.contactRepo.findOne({ where: { ownerId, peerId } });
         if(ContactAlreadyExists) return {"Contact already exists" : ContactAlreadyExists};
         const [owner, peer] = await Promise.all([
-            this.userRepo.findOne({ where: { id: ownerId } }),
-            this.userRepo.findOne({ where: { id: peerId } })
+            this.userRepo.findOne({ where: { accountId: ownerId } }),
+            this.userRepo.findOne({ where: { accountId: peerId } })
         ]);
         if (!owner || !peer) throw new NotFoundException('user not found (may not even exist)');
         

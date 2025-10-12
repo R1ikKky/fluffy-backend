@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Headers, Post, Req } from "@nestjs/common";
 import { AuthService } from "../services/auth.service";
 import { RegisterDto } from "../dto/register.dto";
 import { TokensDto } from "../dto/tokens.dto";
@@ -31,8 +31,8 @@ export class AuthController {
         return this.authService.logout(dto)
     }
  
-    @Post("delete-one/:id")
-    async deleteAcc(@Param("id") accountId: string){
+    @Post("delete-one")
+    async deleteAcc(@Headers("X-User-Id") accountId: string){
         return this.authService.deleteAccount(accountId);
     }
 }

@@ -28,8 +28,8 @@ export class JwtGuard implements CanActivate{
         try {
             const payload = this.publicKey ? (jwt.verify(token, this.publicKey, { algorithms: ["RS256"] }) as any) : (jwt.verify(token, this.sharedSecret!, { algorithms: ["HS256"] }) as any);
 
-            if (!payload.sub) throw new Error('no sub in token');
-            req.userId = { id: String(payload.sub), other: payload };
+            if (!payload.sub || payload.sub == undefined) throw new Error('no sub in token');
+            req.user = { id: String(payload.sub), other: payload };
             return true;
         } catch {
             throw new UnauthorizedException("invalid token(didn't pass jwt guard)")

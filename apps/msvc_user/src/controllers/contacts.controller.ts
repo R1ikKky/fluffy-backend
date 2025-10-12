@@ -1,22 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, Param, Post } from "@nestjs/common";
 import { ContactsService } from "../services/contacts.service";
 
-@Controller('constacts')
+@Controller('contacts')
 export class ContactsController {
     constructor(private readonly ContactsService: ContactsService) {}
 
-    @Get("get-all/:id")
-    list(@Param("id")id: string){
+    @Get("get-all")
+    list(@Headers("X-User-Id") id: string){
         return this.ContactsService.list(id);
     }
 
-    @Post("add-one/:id")
-    add(@Param("id") id: string, @Body() body: { peerId: string } ){
+    @Post("add-one")
+    add(@Headers("X-User-Id") id: string, @Body() body: { peerId: string } ){
         return this.ContactsService.add(id, body.peerId)
     }
     
-    @Delete("delete-one/:id")
-    delete(@Param("id") id: string, @Body() body: { peerId: string } ){
+    @Delete("delete-one")
+    delete(@Headers("X-User-Id") id: string, @Body() body: { peerId: string } ){
         return this.ContactsService.remove(id, body.peerId)
     }
 

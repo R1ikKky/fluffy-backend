@@ -21,7 +21,14 @@ export class UserController{
     }
 
     @Post("get-stack")
-    getMany(@Body() body: { ids: string[] }){
-        return this.userApiService.getManyByIds(body.ids);
+    getMany(@Req() req: any, @Body() body: { ids: string[] }){
+        const userId = req.user.id;
+        return this.userApiService.getManyByIds(userId, body.ids);
+    }
+
+    @Get("get-all")
+    getAll(@Req() req: any){
+        const userId = req.user.id;
+        return this.userApiService.getAll(userId)
     }
 }

@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator';
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9_.-]{3,32}$/i, { message: 'invalid username' })
+  @Matches(/^@[a-z0-9_.-]{3,32}$/i, { message: 'invalid username' })
   username?: string | null;
   @IsOptional()
   @IsString()

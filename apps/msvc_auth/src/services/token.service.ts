@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { RefreshEntity } from "../entities/refresh.entity";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
-import { UserEntity } from "../entities/account.entity";
+import { AccountEntity } from "../entities/account.entity";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
@@ -21,10 +21,10 @@ export class TokenService {
         this.refreshTtlMs = Number(this.cfg.get("REFRESH_TTL_SEC") ?? 2_592_000) * 1000;
     }
 
-    async issueRefresh(userId: string, ip?: string, ua?: string): Promise<RefreshEntity>{
+    async issueRefresh(account: AccountEntity, ip?: string, ua?: string): Promise<RefreshEntity>{
         const now = new Date();
         return this.refreshRepo.save({
-            userId,
+            account,
             issuedAt: now,
             expiresAt: new Date(now.getTime() + this.refreshTtlMs),
             ip,
@@ -32,7 +32,7 @@ export class TokenService {
         });
     }
 
-    async signAccess(user: UserEntity): Promise<string> {
+    async signAccess(user: AccountEntity): Promise<string> {
         const payload = { sub: user.id, ver: user.isVerified ? 1 : 0 };
         return this.jwt.signAsync(payload, { expiresIn: this.accessTtlSec })
     }

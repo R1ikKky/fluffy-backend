@@ -30,9 +30,9 @@ async function bootstrap() {
     options: {
       urls: ["amqp://rick:rick@rabbitmq:5672"],
       queue: "account-queue",
-      queueOptions: { durable: true },
-      noAck: false,
-      prefetchCount: 10
+      // queueOptions: { durable: true },
+      // noAck: false,
+      // prefetchCount: 10
     }
   })
 

@@ -11,6 +11,9 @@ export class RefreshEntity {
     @JoinColumn({ name: "account_id" })
     account!: AccountEntity;
 
+    @Column({ name: "account_id", type: "uuid" })
+    accountId!: string;
+
     @CreateDateColumn({ name: "issued_at", type: "timestamptz" })
     issuedAt!: Date;
 

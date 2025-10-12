@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/user.entity";
 import { In, Repository } from "typeorm";
@@ -16,8 +16,8 @@ export class UserService {
     ) {}
 
     
-    async getOneById(id: string): Promise<UserEntity | null> {
-        const user = await this.usersRepo.findOne({ where: { id } });
+    async getOneByAccountId(id: string): Promise<UserEntity | null> {   // находит не по айдишнику юзера а по account ID БлЯтЬ
+        const user = await this.usersRepo.findOne({ where: { accountId: id } }); 
         if (!user) throw new NotFoundException("user not found");
         return user;
     }
@@ -25,25 +25,25 @@ export class UserService {
     async getManyByIds(ids: string[]){
         if (!ids.length) return [];
         const unique = [...new Set(ids)];
-        return this.usersRepo.find({ where: {id: In(unique)} });
+        return this.usersRepo.find({ where: {accountId: In(unique)} });
     }
     
     async getAll(): Promise<UserEntity[]>{
         return this.usersRepo.find()
     }
     
-    async updateOne(userId: string, patch: UpdateUserDto) {
-        const user = await this.usersRepo.findOne({ where: { id: userId } })
+    async updateOne(accountId: string, patch: UpdateUserDto) {
+        const user = await this.usersRepo.findOne({ where: { accountId } }) // да я еблан не судите строго
         if (!user) throw new NotFoundException("user not found")
             
-            const toSave: Partial<UserEntity> = { id: userId };
+            const toSave: Partial<UserEntity> = { accountId };
             
             if (patch.username !== undefined) {
                 const user = (patch.username || "").trim();
                 toSave.username = user ? user.toLowerCase() : null;
                 if(toSave.username) {
                     const exists = await this.usersRepo.findOne({ where: { username: toSave.username} });
-                    if(exists && exists.id !== userId) throw new ConflictException("username taken");
+                    if(exists && exists.accountId !== accountId) throw new ConflictException("username taken");
                 }
             }
             
@@ -64,8 +64,8 @@ export class UserService {
                 toSave.bio = patch.bio;
             }
             
-            await this.usersRepo.save(toSave);
-            return this.usersRepo.findOne({ where: { id: userId } });
+            await this.usersRepo.update({ accountId }, toSave);
+            return this.usersRepo.findOne({ where: { accountId } });
             
         }
         
