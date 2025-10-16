@@ -5,15 +5,14 @@ import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class JwtGuard implements CanActivate{
-    private readonly publicKey?: Buffer;
-    private readonly sharedSecret?: string;
+    private readonly publicKey: Buffer;
 
     constructor(private readonly cfg: ConfigService) {
         const pubPath = this.cfg.get<string>("JWT_PUBLIC")
         if (pubPath && fileSystem.existsSync(pubPath)){
             this.publicKey = fileSystem.readFileSync(pubPath);
         } else {
-            this.sharedSecret = this.cfg.get<string>("JWT_SECRET") || undefined;
+            throw new UnauthorizedException("bad public key path")
         }
     }
 
@@ -26,7 +25,7 @@ export class JwtGuard implements CanActivate{
         const token = AuthArray[1];
 
         try {
-            const payload = this.publicKey ? (jwt.verify(token, this.publicKey, { algorithms: ["RS256"] }) as any) : (jwt.verify(token, this.sharedSecret!, { algorithms: ["HS256"] }) as any);
+            const payload = (jwt.verify(token, this.publicKey, { algorithms: ["RS256"] }) as any);
 
             if (!payload.sub || payload.sub == undefined) throw new Error('no sub in token');
             req.user = { id: String(payload.sub), other: payload };

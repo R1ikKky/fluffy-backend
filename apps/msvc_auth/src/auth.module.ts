@@ -3,9 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AccountEntity } from "./entities/account.entity";
 import { JwtModule } from "@nestjs/jwt";
-
-import * as fs from "fs"
-// import { connect, AmqpConnectionManager } from "amqp-connection-manager";
 import { PasswordService } from "./services/password.service";
 import { RefreshEntity } from "./entities/refresh.entity";
 import { AuthService } from "./services/auth.service";
@@ -13,6 +10,9 @@ import { TokenService } from "./services/token.service";
 import { AuthController } from "./controllers/auth.controller";
 import { RedisProvider } from "./redis.provider";
 import { ClientsModule, Transport } from "@nestjs/microservices";
+
+import * as fs from 'fs';
+import { join } from 'path';
 
 @Module({
     imports: [
@@ -33,33 +33,13 @@ import { ClientsModule, Transport } from "@nestjs/microservices";
         }),
         TypeOrmModule.forFeature([AccountEntity, RefreshEntity]),
 
-        JwtModule.registerAsync({
-            inject: [ConfigService],
-            useFactory: (cfg: ConfigService) => {
-                const PrivPath = cfg.get<string>("JWT_PRIVATE")
-                const PubPath = cfg.get<string>("JWT_PUBLIC")
-
-                if(PrivPath && PubPath && fs.existsSync(PrivPath) && fs.existsSync(PubPath)){
-                    return {
-                        privateKey: fs.readFileSync(PrivPath),
-                        publicKey: fs.readFileSync(PubPath),
-                        signOptions: {
-                            algorithm: "RS256",
-                            expiresIn: cfg.get<string>("ACCESS_TTL") ?? "15m",
-                        },
-                    };
-                }
-
-                const secret = cfg.get<string>("JWT_SECRET")
-                if (!secret) {
-                    console.log("no secret");
-                    throw new Error("JWT_SECRET is not defined");
-                }
-                return {
-                    secret,
-                    signOptions: { expiresIn: cfg.get<string>("ACCESS_TTL") ?? "15m" },
-                };
-            },
+        JwtModule.register({
+            privateKey: fs.readFileSync(join(__dirname, "../secrets/jwtRS256.key")),
+            publicKey: fs.readFileSync(join(__dirname, "../secrets/jwtRS256.key.pub")),
+            signOptions: {
+                algorithm: "RS256",
+                expiresIn: "15m"
+            }
         }),
 
 
@@ -90,7 +70,6 @@ import { ClientsModule, Transport } from "@nestjs/microservices";
         PasswordService,
         //RateService,
         TokenService,
-
         RedisProvider,
 
     ],

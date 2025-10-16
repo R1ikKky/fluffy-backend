@@ -1,94 +1,107 @@
-import { Injectable, Inject } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import { SubscribeMessage, WebSocketGateway, MessageBody, WebSocketServer, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, ConnectedSocket } from "@nestjs/websockets";
-import { Socket } from "socket.io"
-import Redis from "ioredis";
+import { UnauthorizedException } from "@nestjs/common";
+import { SubscribeMessage, WebSocketGateway, MessageBody, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, ConnectedSocket } from "@nestjs/websockets";
+import { Server, Socket } from "socket.io"
+import * as fileSystem from 'fs';
+import * as jwt from 'jsonwebtoken';
+import { ConfigService } from "@nestjs/config";
+import { WsUser } from "../../dto/wsUser.interface";
+import { PresenceService } from "./presence.service";
 
 
-const ONLINE_KEY = (id: string) => `online:${id}`;
-const TTL = 30;
+@WebSocketGateway({namespace: "/", cors: {origin: "http://localhost:5173", credentials: true}})
+export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer() server!: Server;
 
-@Injectable()
-@WebSocketGateway({path: "/ws", cors: {origin: "*", credentials: true}})
-export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer()
-    // private server!: Server;
-
-    private socketMap: Map<string, Set<Socket>> = new Map();
+    private readonly clients = new Map<string, WsUser>();
+    private readonly publicKey?: Buffer;
 
     constructor(
-        private readonly jwt: JwtService,
-        @Inject("REDIS") private readonly redis: Redis
-    ){}
+        private readonly presence: PresenceService,
+        private readonly cfg: ConfigService,
 
-    afterInit() {
-        console.log("WebSocket server initialised");
+    ){
+        const pubPath = this.cfg.get<string>("JWT_PUBLIC");
+        if (pubPath && fileSystem.existsSync(pubPath)) this.publicKey = fileSystem.readFileSync(pubPath);
     }
 
-    async handleConnection(client: Socket) {
+    async handleConnection(socket: Socket) {
         try{
-            const token = client.handshake.auth.token;
-            const payload: any = this.jwt.verify(token as string);
-            const userId = payload.sub as string;
-            client.data.userId = userId;
+            const token = this.getToken(socket);
+            const payload = this.verifyJwt(token);
+            const userId = String(payload.sub);
 
-            if(!this.socketMap.has(userId)){
-             this.socketMap.set(userId, new Set());
-            } this.socketMap.get(userId)!.add(client);
-            
-            await this.redis.set(ONLINE_KEY(userId), process.env.HOSTNAME ?? "GW", "EX", TTL );
+            let user = this.clients.get(userId);
+            if(!user) {
+                user = { id: userId, sockets: new Set() };
+                this.clients.set(userId, user);
+            }
+            user.sockets.add(socket);
 
-            client.on("client.ping", async () => {
-                client.emit("server.pong")
-                await this.redis.set(ONLINE_KEY(userId), process.env.HOSTNAME ?? "GW", "EX", TTL);
-            });
+            await this.presence.markOnline(userId);
 
-            console.log(`User ${userId} connected (${client.id})`);
-        }catch(err){
-            client.emit("error", "unauthorized");
-            client.disconnect(true);
+            socket.data.userId = userId;
+            socket.emit('connected', { ok: true, userId });
+            console.log(`✅ WS connected: ${userId} (${user.sockets.size})`);
+
+        }catch(err: any){
+            console.error("❌ WS auth failed:", err.message);
+            socket.emit("error", "unauthorized");
+            socket.disconnect();
         }
     }
     
-    async handleDisconnect(client: Socket) {
-        const userId = client.data.userId;
-        if(userId && this.socketMap.has(userId)){
-            const set = this.socketMap.get(userId)!;
-            set.delete(client);
-            if(set.size === 0) this.socketMap.delete(userId)
-        }
-        console.log(`Socket ${client.id} disconected`)
+    async handleDisconnect(socket: Socket) {
+        const userId = socket.data.userId;
+        if(!userId) return;
+
+        const socketsList = this.clients.get(userId);
+        if(!socketsList) return;
+
+        socketsList.sockets.delete(socket);
+        if(socketsList.sockets.size === 0) this.clients.delete(userId); 
+        
+        console.log(`❌ Socket ${userId} disconected (remain ${socketsList?.sockets.size ?? 0})`)
     }
 
-    pushToChat(chatId: string, payload: any){
-        let delivered = 0;
-
-        for(const Sockets of this.socketMap.values()){
-            for(const socket of Sockets){
-                if(socket.data.chats?.has(chatId)){
-                    socket.emit("chat.message", payload);
-                    delivered++;
-                }
-            }
-        }
-        return delivered;
+    @SubscribeMessage("ping")
+    async onPing(@ConnectedSocket() socket: Socket){
+        const userId = socket.data.userId;
+        if(!userId) return;
+        await this.presence.markOnline(userId);
+        socket.emit("pong", { time: Date.now() }) 
     }
 
-    @SubscribeMessage("subscribe.chat")
-    handleSubChat(
-        @MessageBody() body: {chatId: string},
-        @ConnectedSocket() client:Socket,
+    @SubscribeMessage("typing")
+    async onTyping(
+        @MessageBody() body: { chatId: string, typing: boolean },
+        @ConnectedSocket() socket: Socket
     ){
-        if(!client.data.chats) client.data.chats = new Set();
-        client.data.chats.add(body.chatId);
+        socket.broadcast.emit("typing", { from: socket.data.userId, ...body });
     }
 
-    @SubscribeMessage("unsubscribe.chat")
-    handleUnsubChat(
-        @MessageBody() body: {chatId: string},
-        @ConnectedSocket() client:Socket,
-    ){
-        client.data.chats?.delete(body.chatId);
+    pushToUser(userId: string, event: string, payload: any){
+        const socketsList = this.clients.get(userId);
+        if(!socketsList) return;
+        for (const s of socketsList.sockets) s.emit(event, payload);
+    }
+
+    pushToChat(userIds: string[], event: string, payload: any){
+        for (const id of userIds) this.pushToUser(id, event, payload); 
+    }
+
+
+    private getToken(socket: Socket): string{
+        const auth = socket.handshake.headers.authorization;
+        if(auth && auth.startsWith("Bearer ")) return auth.slice(7);
+        const queryToken = socket.handshake.query?.token;
+        if(typeof queryToken === "string") return queryToken;
+        throw new UnauthorizedException("no token bro");
+
+    }
+
+    private verifyJwt(token: string){
+        if(!this.publicKey) throw new UnauthorizedException("no public key");
+        return jwt.verify(token, this.publicKey, {algorithms: ["RS256"]})
     }
 
 }

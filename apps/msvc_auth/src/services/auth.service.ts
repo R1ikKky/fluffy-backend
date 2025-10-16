@@ -18,14 +18,11 @@ import { PasswordService } from './password.service';
 import { Redis } from 'ioredis';
 import { RegisterDto } from '../dto/register.dto';
 import { TokensDto } from '../dto/tokens.dto';
-// import type { AmqpConnectionManager } from "amqp-connection-manager";
 import { LoginDto } from '../dto/login.dto';
 import { TokenService } from './token.service';
 import { RefreshDto } from '../dto/refresh.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-// import { EventPublisher } from "../rabbit/publisher";
-// import { AUTH_EXCHANGE, RK_ACCOUNT_CREATED } from "../contracts/auth.events";
 
 @Injectable()
 export class AuthService implements OnModuleInit {
