@@ -2,60 +2,71 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { AmqpConnectionManager, ChannelWrapper, connect } from "amqp-connection-manager";
 import { WsGateway } from "./ws.gateway";
 import { ConfigService } from "@nestjs/config";
-import { Channel, ConsumeMessage } from "amqplib";
+import { ConfirmChannel } from "amqplib";
 
-// @Injectable()
-// export class RabbitListener implements OnModuleInit, OnModuleDestroy {
-//     private connection!: AmqpConnectionManager;
-//     private channel!: ChannelWrapper;
-//     private readonly queueName: string;
-    
-//     constructor(
-//         private readonly wsGateway: WsGateway,
-//         private readonly cfg: ConfigService
-//     ) {
-//         this.queueName = "rt" + (process.env.HOSTNAME || Math.random().toString(36).substring(2, 10));
-//     }
+@Injectable()
+export class RabbitListener implements OnModuleInit, OnModuleDestroy{
+    private amqp!: AmqpConnectionManager;
+    private channel!: ChannelWrapper;
+    private queue!: string;
+
+    constructor(
+        private readonly cfg: ConfigService,
+        private readonly ws: WsGateway 
+    ) {}
+
+    async onModuleInit() {
+        const url = this.cfg.get("RABBIT_URL") ?? "amqp://rick:rick@rabbit:5672";
+        const pod = this.cfg.get("GATEWAY_POD_NAME") ?? `gw-${Math.random().toString().slice(2, 7)}`;
 
 
-//     async onModuleInit() {
-//         this.connection = connect([this.cfg.get<string>("RABBIT_URL")!], {
-//             reconnectTimeInSeconds: 5
-//         });
-//         this.channel = this.connection.createChannel({
-//             json: false,
-//             setup: async (ch: Channel) => {
-//                 await ch.assertExchange("chat.topic", "topic", {durable:true});
-//                 await ch.assertQueue(this.queueName, {durable: true});
-//                 await ch.bindExchange(this.queueName, "chat.topic", "chat.#");
-//                 await ch.consume(this.queueName, (msg: ConsumeMessage | null) => { if(msg) this.handleMessage(msg, ch) }, {
-//                     noAck: false
-//                 });
-//                 console.log(`Rabbit listener ready (queue ${this.queueName})`)
-//             }
-//         });
-//     }
+        this.amqp = connect([url]);
+        this.queue = `rt-${pod}`;
 
-//     async onModuleDestroy() {
-//         await this.channel?.close();
-//         await this.connection?.close();
-//         console.log('Rabbit listener closed')
-//     }
+        this.channel = this.amqp.createChannel({
+            setup: async (ch: ConfirmChannel) => {
+                await ch.assertExchange("chat.topic", "topic", { durable: true });
+                await ch.assertQueue(this.queue, { durable: true, autoDelete: true });
+                await ch.bindQueue(this.queue, "chat.topic", "chat.#")
+                await ch.prefetch(10)
 
-//     private async handleMessage(msg: ConsumeMessage, ch: Channel){
-//         try{
-//             const rk = msg.fields.routingKey as string;
-//             const [, chatId] = rk.split(".");
-//             const payload = JSON.parse(msg.content.toString());
+                await ch.consume(this.queue, (msg) => this.handleMessage(msg, ch), { noAck: false })
+            }
+        });
 
-//             const delivered = this.wsGateway.pushToChat(chatId, payload);
+        console.log(`RabbitMQ is ready, queue: ${this.queue}`);
+    }
 
-//             console.log(`fan-out chat ${chatId} => sent to ${delivered} sockets  (rk=${rk})`);
+    private handleMessage(msg: any, ch: ConfirmChannel) {
+        try {
+            const routingKey = msg?.fields.routingKey;
+            const body = JSON.parse(msg.content.toString());
 
-//             ch.ack(msg)
-//         }catch(err){
-//             console.log("Error in Rabbit Listener", err);
-//             ch.nack(msg, false, false);
-//         }
-//     }
-// }
+            const [, chatId, event] = routingKey.split('.');
+
+            switch (event) {
+                case "new":
+                    this.ws.pushToChat(body.partcipants, "newMessage", body.message);
+                    break;
+                case "read":
+                    this.ws.pushToChat(body.participants, "readMessage", body);
+                    break;
+                case "typing":
+                    this.ws.pushToChat(body.participants, "typingMessage", body);
+                    break;
+                default:
+                    console.log("ws-rabbit: unhandled", routingKey);
+            }
+
+            ch.ack(msg);
+        } catch(err) {
+            console.error("ws-rabbit: error", err);
+            ch.nack(msg, false, false);
+        }
+    }
+
+    async onModuleDestroy() {
+        await this.channel.close();
+        await this.amqp.close();
+    }
+}

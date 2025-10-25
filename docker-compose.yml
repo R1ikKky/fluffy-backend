@@ -94,6 +94,25 @@ services:
       DATABASE_URL: postgresql://rick:postgres@postgres:5432/fluffy
     networks:
       - backend
+
+  msvc_message:
+    build: 
+      context: .
+      dockerfile: apps/msvc_message/Dockerfile
+    container_name: msvc_message
+    ports:
+      - "3003:3003"
+    depends_on:
+      - redis
+      - rabbitmq
+      - postgres
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_URI: amqp://rick:rick@rabbitmq:5672
+      DATABASE_URL: postgresql://rick:postgres@postgres:5432/fluffy
+    networks:
+      - backend
 volumes:
   pgdata:
   redis_data:
