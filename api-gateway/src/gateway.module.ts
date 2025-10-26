@@ -14,6 +14,8 @@ import { ContactsController } from './controllers/rest/contacts.controller';
 import { PresenceService } from './controllers/ws/presence.service';
 import { AmqpConnectionManager, connect } from 'amqp-connection-manager';
 import { RabbitListener } from './controllers/ws/rabbit.listener';
+import { MessageApiService } from './services/message-api.service';
+import { MessageController } from './controllers/rest/message.controller';
 
 @Module({
   imports: [
@@ -33,12 +35,13 @@ import { RabbitListener } from './controllers/ws/rabbit.listener';
     HttpModule.register({ timeout: 3000 }),
     RedisModule,
   ],
-  controllers: [UserController, AuthController, ContactsController],
+  controllers: [UserController, AuthController, ContactsController, MessageController],
   providers: [
     WsGateway,
     JwtGuard,
     UserApiService,
     AuthApiService,
+    MessageApiService,
     ContactsApiService,
     PresenceService,
     RabbitListener,

@@ -31,4 +31,4 @@ export class UserController{
         const userId = req.user.id;
         return this.userApiService.getAll(userId)
     }
-}
+} 

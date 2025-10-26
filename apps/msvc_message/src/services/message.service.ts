@@ -14,7 +14,7 @@ export class MessageService{
         private readonly publisherService: PublishService
     ){}
 
-    async create(userId: string, dto: CreateMessageDto) {
+    async createMessage(userId: string, dto: CreateMessageDto) {
         const msg = await this.messagesRepo.save({
             chatId: dto.chatId,
             senderId: userId,

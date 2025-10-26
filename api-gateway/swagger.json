@@ -1,0 +1,892 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Gateway API",
+        "version": "1.0.0",
+        "description": "HTTP Gateway REST API specification"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3000"
+        }
+    ],
+    "tags": [
+        {
+            "name": "auth"
+        },
+        {
+            "name": "contacts"
+        },
+        {
+            "name": "messages"
+        },
+        {
+            "name": "users"
+        }
+    ],
+    "paths": {
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "description": "Create a new user account with email and password.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid email or password"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login user",
+                "description": "Authenticate a user and return access and refresh tokens.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged in successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TokenPair"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh access token",
+                "description": "Use a valid refresh token to obtain a new access token.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Access token refreshed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TokenPair"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token"
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "description": "Invalidate the provided refresh token.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/delete-one": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete account",
+                "description": "Delete user account by ID (requires authentication).",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteAccountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Account deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/contacts/get-all": {
+            "get": {
+                "tags": [
+                    "contacts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List contacts",
+                "description": "Return all contacts for the authenticated user.",
+                "responses": {
+                    "200": {
+                        "description": "List of contacts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/contacts/add-one": {
+            "post": {
+                "tags": [
+                    "contacts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add contact",
+                "description": "Add a peer to the authenticated user's contacts.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactAddRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/contacts/delete-one": {
+            "delete": {
+                "tags": [
+                    "contacts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete contact",
+                "description": "Remove a peer from the authenticated user's contacts.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactDeleteRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact removed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/messages/create-one": {
+            "post": {
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a message",
+                "description": "Create a new chat message.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateMessageDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Message created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/messages/get-chat-messages": {
+            "post": {
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get chat messages",
+                "description": "Return a page of messages for a chat (newest first).",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GetChatMessagesDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Messages page",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Message"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/messages/mark-read": {
+            "post": {
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Mark message as read",
+                "description": "Mark the specified message as read by the authenticated user.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReadMessageDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Read receipt created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/users/get-one": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get current user",
+                "description": "Return the authenticated user's profile.",
+                "responses": {
+                    "200": {
+                        "description": "User profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/users/update-one": {
+            "patch": {
+                "tags": [
+                    "users"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update current user",
+                "description": "Update fields of the authenticated user's profile.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/users/get-stack": {
+            "post": {
+                "tags": [
+                    "users"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get users by IDs",
+                "description": "Return a list of users by provided IDs.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IdsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Users list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/users/get-all": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List users",
+                "description": "Return all users visible to the authenticated user.",
+                "responses": {
+                    "200": {
+                        "description": "Users list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RegisterDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "[user@example.com](mailto:user@example.com)"
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 6,
+                        "example": "strongpassword"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "LoginDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "[user@example.com](mailto:user@example.com)"
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 6,
+                        "example": "strongpassword"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "RefreshDto": {
+                "type": "object",
+                "properties": {
+                    "refresh": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "d3b07384-d9a9-4e27-87f8-88cb65b8efb2"
+                    }
+                },
+                "required": [
+                    "refresh"
+                ]
+            },
+            "Attachment": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "[https://cdn.example.com/image.png](https://cdn.example.com/image.png)"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "image"
+                    }
+                },
+                "required": [
+                    "url",
+                    "type"
+                ]
+            },
+            "CreateMessageDto": {
+                "type": "object",
+                "properties": {
+                    "chatId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "5ccfdf55-8b1d-4c5d-b7cd-51f1cf67b3a3"
+                    },
+                    "text": {
+                        "type": "string",
+                        "example": "Hello there!"
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Attachment"
+                        }
+                    }
+                },
+                "required": [
+                    "chatId",
+                    "text"
+                ]
+            },
+            "GetChatMessagesDto": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 50
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 0
+                    }
+                }
+            },
+            "ReadMessageDto": {
+                "type": "object",
+                "properties": {
+                    "chatId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "messageId": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "chatId",
+                    "messageId"
+                ]
+            },
+            "UpdateUserDto": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9_.-]{3,32}$",
+                        "example": "ricksanchez"
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "Rick"
+                    },
+                    "secondName": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "Sanchez"
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "[https://cdn.example.com/avatar.jpg](https://cdn.example.com/avatar.jpg)"
+                    },
+                    "bio": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Scientist, traveler, genius."
+                    }
+                }
+            },
+            "IdsRequest": {
+                "type": "object",
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": [
+                            "2bb72f38-9940-4a4a-bb3a-b9f2a0e7a999",
+                            "f0a3b5d4-9e37-4a1d-a3d1-8b9f2e7c1c55"
+                        ]
+                    }
+                },
+                "required": [
+                    "ids"
+                ]
+            },
+            "StandardResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                }
+            },
+            "TokenPair": {
+                "type": "object",
+                "properties": {
+                    "access": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refresh": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "eac25f25-65a4-4b0b-b4a1-40b1c6bb3e17"
+                    }
+                }
+            },
+            "Message": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "chatId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "senderId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "text": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Attachment"
+                        }
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "editedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "deletedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                }
+            },
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "username": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "secondName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "bio": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                }
+            },
+            "ContactAddRequest": {
+                "type": "object",
+                "properties": {
+                    "peerId": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "peerId"
+                ]
+            },
+            "ContactDeleteRequest": {
+                "type": "object",
+                "properties": {
+                    "peerId": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "peerId"
+                ]
+            },
+            "DeleteAccountRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "bearer": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}

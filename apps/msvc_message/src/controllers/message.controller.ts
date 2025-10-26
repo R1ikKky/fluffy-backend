@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Headers, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Post } from "@nestjs/common";
 import { MessageService } from "../services/message.service";
 import { CreateMessageDto } from "../dto/createMessageDto";
 import { ReadMessageDto } from "../dto/readMessageDto";
+import { GetChatMessagesDto } from "../dto/getChatMessagesDto";
 
 @Controller("messages")
 export class MessageController {
@@ -9,12 +10,12 @@ export class MessageController {
 
     @Post("create-one")
     create(@Headers("X-User-Id") userId: string, @Body() dto: CreateMessageDto) {
-        return this.messageService.create(userId, dto);
+        return this.messageService.createMessage(userId, dto);
     }
 
-    @Get("list")
-    list(@Headers("X-User-Id") userId: string, @Query("limit") limit?: number) {
-        return this.messageService.getChatMessages(userId, limit);
+    @Get("get-chat-messages")
+    list(@Headers("X-User-Id") userId: string, @Body() dto: GetChatMessagesDto) {
+        return this.messageService.getChatMessages(userId, dto.page, dto.limit);
     }
 
     @Post("mark-read")
@@ -22,3 +23,4 @@ export class MessageController {
         return this.messageService.markRead(userId, dto);
     }
 }
+ 
