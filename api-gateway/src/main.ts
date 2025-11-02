@@ -5,12 +5,19 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 import * as path from 'path';
+import cookieParser from 'cookie-parser';
+
 
 
 async function bootstrap() {
 
-  const app = await NestFactory.create(GatewayModule,{
-    cors: false
+  const app = await NestFactory.create(GatewayModule);
+
+  app.use(cookieParser());
+
+  app.enableCors({
+    origin: 'http://localhost:4200', 
+    credentials: true,
   });
 
   const swaggerFile = path.resolve(__dirname, "../swagger.json")
