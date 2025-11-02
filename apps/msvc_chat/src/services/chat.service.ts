@@ -17,7 +17,7 @@ export class ChatService{
     async createChat(ownerId: string, dto: CreateChatDto) {
         const chat = await this.chatRepo.save({
             type: dto.type,
-            title: dto.title,
+            title: dto.title ?? "new chat",
             avatarUrl: dto.avatarUrl ?? null,
             ownerId
         })

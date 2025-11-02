@@ -6,8 +6,8 @@ import { ChatEntity } from "./entities/chat.entity";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { ChatController } from "./controllers/chat.controller";
 import { ChatService } from "./services/chat.service";
-// import { MembersService } from "./services/members.service";
 import { PublishService } from "./services/publisher.service";
+import { MemberService } from "./services/members.service";
 
 @Module({
     imports: [
@@ -42,7 +42,7 @@ import { PublishService } from "./services/publisher.service";
             }
         ])
     ],
-    providers: [ChatService, PublishService],
+    providers: [ChatService, PublishService, MemberService],
     controllers: [ChatController]
 })
 export class ChatModule {}
