@@ -1,24 +1,28 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/user.entity";
 import { In, Repository } from "typeorm";
 import { UpdateUserDto } from "../dto/updateUserDto";
 import { AccountDto } from "../dto/accountDto";
+import Redis from "ioredis";
 
 @Injectable()
 export class UserService {
 
     private readonly logger = new Logger(UserService.name);
 
-
     constructor(
         @InjectRepository(UserEntity) private readonly usersRepo: Repository<UserEntity>,
-    ) {}
+        @Inject("REDIS") private readonly redisClient: Redis
 
+    ) {};
     
-    async getOneByAccountId(id: string): Promise<UserEntity | null> {   // находит не по айдишнику юзера а по account ID БлЯтЬ
-        const user = await this.usersRepo.findOne({ where: { accountId: id } }); 
+    async getOneByAccountId(accountId: string): Promise<UserEntity | null> {   // находит не по айдишнику юзера а по account ID БлЯтЬ
+        const userInRedis = await this.redisClient.get(`accountId:${accountId}`);
+        if (userInRedis) return JSON.parse(userInRedis);
+        const user = await this.usersRepo.findOne({ where: { accountId: accountId } }); 
         if (!user) throw new NotFoundException("user not found");
+        await this.redisClient.set(`accountId:${accountId}`, JSON.stringify(user))
         return user;
     }
     
@@ -33,7 +37,7 @@ export class UserService {
     }
     
     async updateOne(accountId: string, patch: UpdateUserDto) {
-        const user = await this.usersRepo.findOne({ where: { accountId } }) // да я еблан не судите строго
+        const user = await this.usersRepo.findOne({ where: { accountId } })
         if (!user) throw new NotFoundException("user not found")
             
             const toSave: Partial<UserEntity> = { accountId };
@@ -65,7 +69,14 @@ export class UserService {
             }
             
             await this.usersRepo.update({ accountId }, toSave);
-            return this.usersRepo.findOne({ where: { accountId } });
+
+            const updatedUser = await this.usersRepo.findOne({ where: { accountId } });
+            
+            if (updatedUser) {
+                await this.redisClient.set(`accountId:${accountId}`, JSON.stringify(updatedUser))
+            } else {
+                await this.redisClient.del(`accountId:${accountId}`)
+            }
             
         }
         
@@ -93,9 +104,31 @@ export class UserService {
 
                 const res = await this.usersRepo.delete({ accountId: accountId });
                 if(!res.affected) return { ok: false, reason: "User not found2" };
+                await this.redisClient.del(`accountId:${accountId}`)
                 return { ok: true };
             } catch(err) {
                 return { ok: false, reason: err };
+            }
+        }
+
+        async handleUserValidation(accountIds: string[]) {
+            try {
+                const users  = await this.usersRepo.find({
+                    where: {
+                        accountId: In(accountIds)
+                    },
+                    select: ["accountId"]
+                })
+                
+                const foundIds = users.map(user => user.accountId)
+                const missingIds = accountIds.filter(id => !foundIds.includes(id))
+
+                return {
+                    foundIds,
+                    missingIds
+                }
+            } catch (err) {
+                throw err
             }
         }
     }

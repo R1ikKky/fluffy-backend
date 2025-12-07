@@ -5,9 +5,9 @@
     "build": "nx build msvc_chat --configuration=production"
   },
   "devDependencies": {
-    "nx": "^18.3.0",
+    "@nx/js": "^18.3.0",
     "@nx/nest": "^18.3.0",
-    "@nx/js": "^18.3.0"
+    "nx": "^18.3.0"
   },
   "private": true,
   "nx": {
@@ -49,5 +49,8 @@
         }
       }
     }
+  },
+  "dependencies": {
+    "rxjs": "^7.8.1"
   }
 }

@@ -50,7 +50,7 @@ export class AuthService implements OnModuleInit {
     private readonly accountsRepo: Repository<AccountEntity>,
     @InjectRepository(RefreshEntity)
     private readonly refreshRepo: Repository<RefreshEntity>,
-    private readonly ds: DataSource,
+    private readonly dataSource: DataSource,
     private readonly cfg: ConfigService,
     private readonly PasswordService: PasswordService,
     private readonly TokenService: TokenService,
@@ -61,7 +61,7 @@ export class AuthService implements OnModuleInit {
 
   async onModuleInit() {
     await this.rabbitClient.connect();
-    this.logger.log('✅ RabbitMQ client connected');
+    this.logger.log('✅ RabbitMQ client connected to auth service');
   }
 
   //---//
@@ -86,7 +86,7 @@ export class AuthService implements OnModuleInit {
     let account!: AccountEntity;
     let refresh!: RefreshEntity;
 
-    await this.ds.transaction(async (em) => {
+    await this.dataSource.transaction(async (em) => {
       account = await em.getRepository(AccountEntity).save({ email, passHash });
       refresh = await em.getRepository(RefreshEntity).save({
         account,
@@ -164,7 +164,7 @@ export class AuthService implements OnModuleInit {
 
     let newRefresh!: RefreshEntity;
 
-    await this.ds.transaction(async (em) => {
+    await this.dataSource.transaction(async (em) => {
       await em
         .getRepository(RefreshEntity)
         .update({ token: current.token }, { revokedAt: now });

@@ -6,6 +6,8 @@ import { ReadEntity } from "./entities/read.entity";
 import { MessageController } from "./controllers/message.controller";
 import { MessageService } from "./services/message.service";
 import { PublishService } from "./services/publisher.service";
+import { RedisProvider } from "./redis.provider";
+import { ClientsModule, Transport } from "@nestjs/microservices";
 
 @Module({
     imports: [
@@ -25,8 +27,24 @@ import { PublishService } from "./services/publisher.service";
             })
         }),
         TypeOrmModule.forFeature([MessageEntity, ReadEntity]),
+
+        ClientsModule.register([
+            {
+                name: "MSVC_MESSAGE",
+                transport: Transport.RMQ,
+                options: {
+                    urls: ["amqp://rick:rick@rabbitmq:5672"],
+                    queue: "chat.get.participants",
+                    queueOptions: {
+                        durable: true
+                    }
+                }
+            }
+        ])
+
     ],
     controllers: [MessageController],
-    providers: [MessageService, PublishService],
+    providers: [MessageService, PublishService, RedisProvider],
+    exports: ["REDIS"]
 })
 export class MessageModule {};

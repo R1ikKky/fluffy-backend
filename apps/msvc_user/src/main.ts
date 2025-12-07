@@ -2,19 +2,11 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { UserModule } from './user.module';
 import { ConfigService } from '@nestjs/config';
-import { SwaggerModule } from '@nestjs/swagger';
-import * as fs from 'fs';
-import * as path from 'path';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create(UserModule, { cors: false });
   const cfg = app.get(ConfigService);
-
-  const swaggerFile = path.resolve(__dirname, "../openapi.json")
-  const document = JSON.parse(fs.readFileSync(swaggerFile, "utf-8"))
-
-  SwaggerModule.setup("/docs", app, document)
 
   const origin = cfg.get<string>('FRONT_ORIGIN') ?? 'http://100.68.110.50:5173';
 

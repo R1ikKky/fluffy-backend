@@ -33,7 +33,7 @@ export class ChatApiService{
     }
 
     addMember(userId: string, chatId: string, role: "member" | "admin") {
-        return firstValueFrom(                                  //??????? как передать???????????
+        return firstValueFrom(                                 
             this.httpService.post(`${this.url}/chat/add-member`,{ chatId, role } , { headers: this.headers(userId) })
         ).then(res => res.data)
     }

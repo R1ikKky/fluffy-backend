@@ -1,7 +1,7 @@
-import { IsUUID, IsString, IsOptional, IsArray } from 'class-validator';
+import { IsUUID, IsString, IsOptional, IsArray, IsNotEmpty } from 'class-validator';
 
 export class CreateMessageDto {
-    @IsUUID() chatId!: string;
-    @IsString() text!: string;
-    @IsArray() @IsOptional() attachments?: { url: string; type: string }[];
+    @IsUUID() @IsNotEmpty() chatId!: string;
+    @IsString() @IsNotEmpty() text!: string;
+    @IsArray() @IsOptional() @IsNotEmpty() attachments?: { url: string; type: string }[];
 }

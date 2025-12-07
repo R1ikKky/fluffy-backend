@@ -8,6 +8,7 @@ import { ChatController } from "./controllers/chat.controller";
 import { ChatService } from "./services/chat.service";
 import { PublishService } from "./services/publisher.service";
 import { MemberService } from "./services/members.service";
+import { RedisProvider } from "./redis.provider";
 
 @Module({
     imports: [
@@ -32,7 +33,7 @@ import { MemberService } from "./services/members.service";
             {
                 name: "MSVC_CHAT",
                 transport: Transport.RMQ,
-                options: {
+                options: { 
                     urls: ["amqp://rick:rick@rabbitmq:5672"],
                     queue: "chat-queue",
                     queueOptions: {
@@ -42,7 +43,8 @@ import { MemberService } from "./services/members.service";
             }
         ])
     ],
-    providers: [ChatService, PublishService, MemberService],
-    controllers: [ChatController]
+    providers: [ChatService, PublishService, MemberService, RedisProvider],
+    controllers: [ChatController],
+    exports: ["REDIS"]
 })
 export class ChatModule {}

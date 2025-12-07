@@ -19,4 +19,5 @@ export class AuthEventsListener {
     async onAccountDeleted(@Payload() msg: { accountId: string }) {
         return await this.usersService.deleteUser(msg.accountId);
     }
+
 }

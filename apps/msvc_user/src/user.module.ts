@@ -9,8 +9,10 @@ import { ContactsService } from "./services/contacts.service";
 import { PresenceService } from "./services/presence.service";
 import { ContactsController } from "./controllers/contacts.controller";
 import { PresenceController } from "./controllers/presence.controller";
-import IORedis, { Redis } from 'ioredis';
 import { AuthEventsListener } from "./listeners/auth.events.listener";
+import { RedisProvider } from "./redis.provider";
+import { ChatEventsListener } from "./listeners/chat.events.listener";
+
 
 @Module({
     imports: [
@@ -26,16 +28,8 @@ import { AuthEventsListener } from "./listeners/auth.events.listener";
         }),
         TypeOrmModule.forFeature([UserEntity, ContactEntity]),
     ],
-    controllers: [UserController, ContactsController, PresenceController, AuthEventsListener],
-    providers: [UserService, ContactsService, PresenceService,
-        {
-        provide: 'REDIS',
-        inject: [ConfigService],
-        useFactory: (cfg: ConfigService): Redis =>
-            new IORedis(cfg.get('REDIS_URL') ?? 'redis://127.0.0.1:6379', {
-            maxRetriesPerRequest: null,
-            }),
-        }
-    ]
+    controllers: [UserController, ContactsController, PresenceController, AuthEventsListener, ChatEventsListener],
+    providers: [UserService, ContactsService, PresenceService, RedisProvider],
+    exports: ["REDIS"]
 })
 export class UserModule {}

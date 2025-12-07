@@ -4,7 +4,7 @@ import { AddMemberDto } from "../../dto/addMember.dto"
 import { CreateChatDto } from "../../dto/createChat.dto"
 import { ChatApiService } from "../../services/chat-api.service"
 
-UseGuards(JwtGuard)
+@UseGuards(JwtGuard)
 @Controller("chat")
 export class ChatController {
     constructor(private readonly chatApiService: ChatApiService) {}

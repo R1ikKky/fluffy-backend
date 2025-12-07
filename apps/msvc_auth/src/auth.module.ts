@@ -42,7 +42,6 @@ import { join } from 'path';
             }
         }),
 
-
         ClientsModule.register([
             {
                 name: "MSVC_AUTH",

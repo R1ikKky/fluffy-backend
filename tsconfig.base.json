@@ -4,6 +4,10 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "importHelpers": true,
+    "paths": {
+      "rxjs": ["./node_modules/rxjs"],
+      "rxjs/*": ["./node_modules/rxjs/*"]
+    },
     "isolatedModules": true,
     "lib": ["es2022"],
     "module": "nodenext",

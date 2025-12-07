@@ -21,14 +21,15 @@ export class PublishService implements OnModuleInit, OnModuleDestroy {
     }
 
     async publish(exchange: string, key: string, payload: any){
-        await this.channel.publish(exchange, key, Buffer.from(JSON.stringify(payload)), {
-            contentType: "application/json",
-            persistent: true
-        })
-    }
-
-    async getParticipants(chatId: string): Promise<string[]> {
-        return ["user1", "user2"]
+        try {
+            await this.channel.publish(exchange, key, Buffer.from(JSON.stringify(payload)), {
+                contentType: "application/json",
+                persistent: true
+            })
+        } catch(err) {
+            console.error(`❌ Failed to publish message to ${exchange}:${key}`, err);
+            throw err
+        }
     }
 
     async onModuleDestroy() {
